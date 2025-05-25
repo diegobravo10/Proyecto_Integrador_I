@@ -71,10 +71,6 @@ const Registro = () => {
           <input type="email" value={correo} disabled />
         </div>
         <div>
-          <label>UID:</label>
-          <input type="text" value={uid} disabled />
-        </div>
-        <div>
           <label>Nombres:</label>
           <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
         </div>

@@ -1,8 +1,10 @@
 import { auth, provider, db } from "../servicios/firebase.js";
 import { signInWithPopup } from "firebase/auth";
 import { collection, query, where, getDocs, doc, setDoc } from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
+     const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
