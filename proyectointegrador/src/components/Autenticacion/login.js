@@ -22,11 +22,13 @@ const Login = () => {
       if (!querySnapshot.empty) {
         // El usuario ya existe en Firestore
         const userData = querySnapshot.docs[0].data();
-        alert(`Bienvenido, ${userData.rol}`);
+        alert(`Bienvenido, ${userData.nombre}`);
 
         if (userData.rol === "doctor") {
+          navigate("/doctor");
           //window.location.href = "/doctor"; // Cambia esta ruta si lo necesitas
         } else if (userData.rol === "paciente") {
+          navigate("/paciente");
           //window.location.href = "/paciente";
         } else {
           window.location.href = "/no-autorizado";

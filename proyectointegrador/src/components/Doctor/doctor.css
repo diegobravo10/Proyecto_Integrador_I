@@ -1,0 +1,56 @@
+.tabla-citas {
+  width: 90%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  font-family: Arial, sans-serif;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.tabla-citas thead {
+  background-color: #2c3e50;
+  color: white;
+}
+
+.tabla-citas th, .tabla-citas td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.tabla-citas tbody tr:hover {
+  background-color: #f4f4f4;
+}
+
+.estado {
+  padding: 5px 10px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.estado.pendiente {
+  background-color: #f1c40f;
+  color: #2c3e50;
+}
+
+.estado.completado {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.estado.cancelado {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.contenedortabla {
+  display: flex;
+  justify-content: center; /* centra horizontalmente */
+  margin-top: 30px; /* espacio superior opcional */
+}
+
+h1 {
+    color: rgb(63, 63, 63);
+    font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+}
+

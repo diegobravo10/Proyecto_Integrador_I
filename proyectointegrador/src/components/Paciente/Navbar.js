@@ -6,11 +6,21 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-logo">MedCitas</div>
-      <ul className="navbar-links">
+
+      <div className="navbar-content">
+    <ul className="navbar-links">
         <li><Link to="/paciente">Agendar</Link></li>
         <li><Link to="/perfil">Perfil</Link></li>
         <li><Link to="/">Salir</Link></li>
-      </ul>
+    </ul>
+
+    <div className="navbar-divider" />
+
+    <div className="navbar-user">
+        👤 Diego Bravo
+    </div>
+    </div>
+
     </nav>
   );
 };

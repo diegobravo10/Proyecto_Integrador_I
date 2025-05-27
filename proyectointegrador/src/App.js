@@ -3,17 +3,22 @@ import { BrowserRouter as Router, Routes, Route, useLocation } from "react-route
 
 import Login from './components/Autenticacion/login';
 import Registro from './components/Autenticacion/Registro';
-import Doctor from './components/Frame/doctor';  
-import Paciente from './components/Frame/paciente';
-import Navbar from './components/Frame/Navbar';
+import Doctor from './components/Doctor/doctor';  
+import Paciente from './components/Paciente/paciente';
+import Navbar from './components/Paciente/Navbar';
+import NavbarD from './components/Doctor/Navbard';
 
 function AppContent() {
   const location = useLocation();
-  const hideNavbar = location.pathname === "/" || location.pathname === "/registro";
+  const pathname = location.pathname;
+
+  const showNavbarPaciente = pathname.startsWith("/paciente");
+  const showNavbarDoctor = pathname.startsWith("/doctor");
 
   return (
     <>
-      {!hideNavbar && <Navbar />}
+      {showNavbarPaciente && <Navbar />}
+      {showNavbarDoctor && <NavbarD />}
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/registro" element={<Registro />} />
@@ -23,6 +28,7 @@ function AppContent() {
     </>
   );
 }
+
 
 function App() {
   return (
