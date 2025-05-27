@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { db, auth } from "../servicios/firebase.js";
 import { doc, setDoc } from "firebase/firestore";
-
+import './registro.css'
 const Registro = () => {
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
@@ -63,9 +63,10 @@ const Registro = () => {
   };
 
   return (
-    <div>
-      <h2>Registro de usuario</h2>
-      <form onSubmit={handleSubmit}>
+    <div className="registro-container">
+      <h2>Registro</h2>
+      <p>Estimado paciente, por favor complete el siguiente formulario con sus datos personales.</p>
+      <form onSubmit={handleSubmit} className="registro-form">
         <div>
           <label>Correo electrónico:</label>
           <input type="email" value={correo} disabled />
@@ -94,17 +95,10 @@ const Registro = () => {
           <label>Edad:</label>
           <input type="number" value={edad} onChange={(e) => setEdad(e.target.value)} />
         </div>
-        {/* Opcional: si quieres permitir elegir rol */}
-        {/* <div>
-          <label>Rol:</label>
-          <select value={rol} onChange={(e) => setRol(e.target.value)}>
-            <option value="paciente">Paciente</option>
-            <option value="doctor">Doctor</option>
-          </select>
-        </div> */}
         <button type="submit">Registrar</button>
       </form>
     </div>
+
   );
 };
 

@@ -1,0 +1,73 @@
+.login-container {
+  display: flex;
+  height: 100vh; /* Ocupa toda la pantalla */
+}
+
+.left-side {
+  flex: 3.5; /* Ocupa la mitad */
+  background-color: #ffffff; /* Cambia según desees */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-image {
+  width: 90%;  /* Para que la imagen ocupe gran parte de su contenedor */
+  max-width: 600px; /* Limita el tamaño máximo de la imagen */
+  height: auto;
+}
+
+.right-side {
+  flex: 1.5; /* La otra mitad */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: #ffffff;
+  padding: 2rem;
+}
+
+/* 📱 Opcional: Para móviles puedes hacer que ocupe toda la pantalla */
+@media (max-width: 768px) {
+  .login-container {
+    flex-direction: column;
+  }
+
+  .left-side, .right-side {
+    flex: none;
+    width: 100%;
+  }
+
+  .login-image {
+    max-width: 100%; /* La imagen se ajusta al ancho del contenedor */
+  }
+
+}
+ button {
+    padding: 3%;
+    background-color: rgb(75, 179, 186);
+    border-radius: 5px;
+    border: none;
+    color: white;
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 200%;
+    font-weight: bold;
+    margin-top: 20%;
+  }
+
+button:hover {
+    background-color: rgb(21, 93, 93);
+    
+}
+
+h1 {
+    color: rgb(77, 159, 184);
+    font-size: 400%;
+}
+
+
+.parrafo {
+  text-align: left;
+  font-size: 120%; 
+  margin-top: 10%;/* Cambia a 'left', 'right', 'justify' según necesites */
+}

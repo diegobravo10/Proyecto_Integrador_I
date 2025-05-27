@@ -1,0 +1,73 @@
+.registro-container {
+  max-width: 600px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  align-items: center;
+
+}
+
+.registro-container h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+.registro-form div {
+  margin-bottom: 0.75rem;
+}
+
+.registro-form label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #555;
+}
+.registro-form div:last-of-type {
+  margin-bottom: 2rem;  /* Específicamente para el último campo */
+}
+
+.registro-form input {
+  width: 90%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.registro-form input:focus {
+  border-color: #4c95af;
+  outline: none;
+}
+
+.registro-form button {
+  margin-top: 0;
+  width: 95%;
+  padding: 0.75rem;
+  background-color: #67b4e7;
+  color: white;
+  font-size: 1.1rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.registro-form button:hover {
+  background-color: #42659c;
+}
+
+/* 📱 Responsive */
+@media (max-width: 600px) {
+  .registro-container {
+    margin: 1rem;
+    padding: 1rem;
+  }
+}
+
+ p {
+    color: rgb(90, 143, 179);
+ }

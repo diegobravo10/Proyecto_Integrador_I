@@ -1,8 +1,8 @@
 import { auth, provider, db } from "../servicios/firebase.js";
 import { signInWithPopup } from "firebase/auth";
-import { collection, query, where, getDocs, doc, setDoc } from "firebase/firestore";
+import { collection, query, where, getDocs} from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
-
+import "./login.css";
 const Login = () => {
      const navigate = useNavigate();
 
@@ -11,7 +11,7 @@ const Login = () => {
       const result = await signInWithPopup(auth, provider);
       const user = result.user;
 
-      const uid = user.uid; // 🔥 Este es el UID único del usuario
+      const uid = user.uid; 
       const email = user.email;
 
       // Verificar si el usuario ya está en Firestore por UID
@@ -51,11 +51,17 @@ const Login = () => {
   };
 
   return (
-    <div>
-      <h2>Inicia sesión</h2>
-      <button onClick={handleLogin}>
-        Iniciar sesión con Google
-      </button>
+    <div className="login-container">
+      <div className="left-side">
+        <img src="/assest/inicio.jpg" alt="Imagen" className="login-image" />
+      </div>
+      <div className="right-side">
+        <h1>Citas Medicas</h1>
+          <p className="parrafo">
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor.
+          </p>
+        <button onClick={handleLogin}>Ingresar</button>
+      </div>
     </div>
   );
 };
