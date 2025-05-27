@@ -9,7 +9,7 @@ const Registro = () => {
   const [correo, setCorreo] = useState("");
   const [direccion, setDireccion] = useState("");
   const [telefono, setTelefono] = useState("");
-  const [edad, setEdad] = useState("");
+  const [fechaNacimiento, setFechaNacimiento] = useState("");
   const [uid, setUid] = useState("");
   const [rol, setRol] = useState("paciente");  // Por defecto paciente
 
@@ -32,7 +32,7 @@ const Registro = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!nombre || !apellido || !cedula || !direccion || !telefono || !edad) {
+    if (!nombre || !apellido || !cedula || !direccion || !telefono || !fechaNacimiento) {
       alert("Por favor, completa todos los campos.");
       return;
     }
@@ -46,7 +46,7 @@ const Registro = () => {
         cedula,
         direccion,
         telefono,
-        edad,
+        fechaNacimiento,
         rol,
       });
 
@@ -92,8 +92,8 @@ const Registro = () => {
           <input type="text" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
         </div>
         <div>
-          <label>Edad:</label>
-          <input type="number" value={edad} onChange={(e) => setEdad(e.target.value)} />
+          <label>Fecha de Nacimiento:</label>
+          <input type="date" value={fechaNacimiento} onChange={(e) => setFechaNacimiento(e.target.value)} />
         </div>
         <button type="submit">Registrar</button>
       </form>

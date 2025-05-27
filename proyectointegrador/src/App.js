@@ -7,13 +7,15 @@ import Doctor from './components/Doctor/doctor';
 import Paciente from './components/Paciente/paciente';
 import Navbar from './components/Paciente/Navbar';
 import NavbarD from './components/Doctor/Navbard';
+import Ajuste from './components/Doctor/Ajuste';
 
 function AppContent() {
   const location = useLocation();
   const pathname = location.pathname;
 
   const showNavbarPaciente = pathname.startsWith("/paciente");
-  const showNavbarDoctor = pathname.startsWith("/doctor");
+  const showNavbarDoctor = ["/doctor", "/ajustes", "/horarios"].some(path => pathname.startsWith(path));
+
 
   return (
     <>
@@ -24,6 +26,7 @@ function AppContent() {
         <Route path="/registro" element={<Registro />} />
         <Route path="/doctor" element={<Doctor />} />
         <Route path="/paciente" element={<Paciente />} />
+        <Route path="/ajustes" element={<Ajuste />} />
       </Routes>
     </>
   );
