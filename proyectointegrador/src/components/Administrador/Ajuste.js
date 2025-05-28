@@ -3,7 +3,7 @@ import { doc, getDoc, updateDoc, query, collection, where, getDocs, addDoc } fro
 import { db } from "../servicios/firebase";
 import { FaSearch } from "react-icons/fa";
 import { FaPlus } from "react-icons/fa";
-
+import { Timestamp } from "firebase/firestore";
 
 import './Ajuste.css';
 const Ajuste = () => {
@@ -16,11 +16,14 @@ const Ajuste = () => {
   const [fechaNacimiento, setFechaNacimiento] = useState("");
   const [espid, setEspid] = useState("");
   const [nuevaEspecialidad, setNuevaEspecialidad] = useState("");
-  const [docId, setDocId] = useState("");
   const [busquedaCedula, setBusquedaCedula] = useState("");
   const [resultadoBusqueda, setResultadoBusqueda] = useState(null);
   const [especialidades, setEspecialidades] = useState([]);
 const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState("");
+const [especialidadFiltrada, setEspecialidadFiltrada] = useState("");
+const [doctoresPorEspecialidad, setDoctoresPorEspecialidad] = useState([]);
+const [doctorSeleccionado, setDoctorSeleccionado] = useState(null);
+
 
 
 const buscarPorCedula = async () => {
@@ -44,52 +47,51 @@ const buscarPorCedula = async () => {
 
 
   useEffect(() => {
-    const storedId = localStorage.getItem("uid");
-    if (storedId) {
-      setDocId(storedId);
-      const cargarDatos = async () => {
-        try {
-          const userRef = doc(db, "users", storedId);
-          const docSnap = await getDoc(userRef);
+  if (!doctorSeleccionado?.id) return;
 
-         
-          if (docSnap.exists()) {
-            const datos = docSnap.data();
-            setCorreo(datos.correo || "");
-            setNombre(datos.nombre || "");
-            setApellido(datos.apellido || "");
-            setCedula(datos.cedula || "");
-            setDireccion(datos.direccion || "");
-            setTelefono(datos.telefono || "");
+  const cargarDatosDoctor = async () => {
+    try {
+      const userRef = doc(db, "users", doctorSeleccionado.id);
+      const docSnap = await getDoc(userRef);
 
-            const espe = doc(db, "especialidad", datos.especialidadid);
-            const docEspe = await getDoc(espe);
-            const datEsp = docEspe.data();
+      if (docSnap.exists()) {
+        const datos = docSnap.data();
+        setCorreo(datos.correo || "");
+        setNombre(datos.nombre || "");
+        setApellido(datos.apellido || "");
+        setCedula(datos.cedula || "");
+        setDireccion(datos.direccion || "");
+        setTelefono(datos.telefono || "");
 
-            setEspid(datEsp.nombre || "")
-
-            if (datos.fechaNacimiento && datos.fechaNacimiento.toDate) {
-                    const fecha = datos.fechaNacimiento.toDate();
-                    const yyyy = fecha.getFullYear();
-                    const mm = String(fecha.getMonth() + 1).padStart(2, '0');
-                    const dd = String(fecha.getDate()).padStart(2, '0');
-                    setFechaNacimiento(`${yyyy}-${mm}-${dd}`);
-            } else {
-                    setFechaNacimiento("");
-            }
-
-
-          } else {
-            console.warn("No se encontró el usuario");
-          }
-        } catch (error) {
-          console.error("Error al obtener datos:", error);
+        if (datos.especialidadid) {
+          const espe = doc(db, "especialidad", datos.especialidadid);
+          const docEspe = await getDoc(espe);
+          const datEsp = docEspe.data();
+          setEspid(datEsp.nombre || "");
+        } else {
+          setEspid("");
         }
-      };
 
-      cargarDatos();
+        if (datos.fechaNacimiento && datos.fechaNacimiento.toDate) {
+          const fecha = datos.fechaNacimiento.toDate();
+          const yyyy = fecha.getFullYear();
+          const mm = String(fecha.getMonth() + 1).padStart(2, "0");
+          const dd = String(fecha.getDate()).padStart(2, "0");
+          setFechaNacimiento(`${yyyy}-${mm}-${dd}`);
+        } else {
+          setFechaNacimiento("");
+        }
+      } else {
+        console.warn("No se encontró el usuario");
+      }
+    } catch (error) {
+      console.error("Error al obtener datos:", error);
     }
-  }, []);
+  };
+
+  cargarDatosDoctor();
+}, [doctorSeleccionado]);
+
 
 
 useEffect(() => {
@@ -109,27 +111,25 @@ useEffect(() => {
   obtenerEspecialidades();
 }, []);
 
+const obtenerDoctoresPorEspecialidad = async (especialidadId) => {
+  setDoctorSeleccionado(null);
+  try {
+    const q = query(
+      collection(db, "users"),
+      where("rol", "==", "doctor"),
+      where("especialidadid", "==", especialidadId)
+    );
+    const snapshot = await getDocs(q);
+    const lista = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    setDoctoresPorEspecialidad(lista);
+  } catch (error) {
+    console.error("Error al obtener doctores por especialidad:", error);
+  }
+};
 
-  const handleGuardar = async () => {
-    if (!docId) return;
-
-    try {
-      const userRef = doc(db, "users", docId);
-      await updateDoc(userRef, {
-        nombre,
-        apellido,
-        cedula,
-        direccion,
-        telefono,
-        fechaNacimiento,
-      });
-
-      alert("Datos actualizados correctamente");
-    } catch (error) {
-      console.error("Error al guardar:", error);
-      alert("Ocurrió un error al guardar los cambios.");
-    }
-  };
 
   const guardarCambiosAdmin = async () => {
   if (!resultadoBusqueda || !especialidadSeleccionada) {
@@ -171,6 +171,28 @@ const agregarEspecialidad = async () => {
   }
 };
 
+const guardarCambiosDoctor = async (doctor) => {
+  try {
+    // Usa el estado local fechaNacimiento (string) para generar el timestamp
+    const fechaComoTimestamp = fechaNacimiento
+      ? Timestamp.fromDate(new Date(fechaNacimiento + "T12:00:00"))
+      : null;
+
+    const doctorRef = doc(db, "users", doctor.id);
+    await updateDoc(doctorRef, {
+      nombre,
+      apellido,
+      cedula,
+      telefono,
+      fechaNacimiento: fechaComoTimestamp,
+    });
+    alert("Cambios guardados correctamente.");
+  } catch (error) {
+    console.error("Error al guardar:", error);
+    alert("Error al guardar los cambios.");
+  }
+};
+
 
 
   return (
@@ -178,19 +200,71 @@ const agregarEspecialidad = async () => {
      <div className="ajuste-container">
         
         <div>
+
+         <div className="select-container">
+            <select
+              value={especialidadFiltrada}
+              onChange={(e) => {
+                const selected = e.target.value;
+                setEspecialidadFiltrada(selected);
+                obtenerDoctoresPorEspecialidad(selected);
+              }}
+            >
+              <option value="">Seleccione una especialidad</option>
+              {especialidades.map((esp) => (
+                <option key={esp.id} value={esp.id}>
+                  {esp.nombre}
+                </option>
+              ))}
+            </select>
+
+            {doctoresPorEspecialidad.length > 0 && (
+              <select
+                value={doctorSeleccionado?.id || ""}
+                onChange={(e) => {
+                  const docId = e.target.value;
+                  const doctor = doctoresPorEspecialidad.find((d) => d.id === docId);
+                  setDoctorSeleccionado({ ...doctor });
+                }}
+              >
+                <option value="">Seleccione un doctor</option>
+                {doctoresPorEspecialidad.map((doctor) => (
+                  <option key={doctor.id} value={doctor.id}>
+                    {doctor.nombre} {doctor.apellido}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+
         <h2>Datos Personales</h2>
 
        <div className="ajuste-form-group-row">
             <div className="ajuste-form-left">
                 <label>Correo electrónico:</label>
-                <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)}/>
+                <input type="email" value={correo} disabled/>
             </div>
 
-            <div className="ajuste-form-right">
-                <button className="ajuste-btn-guardar" onClick={handleGuardar}>
-                Guardar Cambios
-                </button>
-            </div>
+           <button
+            className="ajuste-btn-guardar"
+            onClick={() => {
+              if (!doctorSeleccionado) {
+                alert("Seleccione un doctor primero.");
+                return;
+              }
+              guardarCambiosDoctor({
+                id: doctorSeleccionado.id,
+                nombre,
+                apellido,
+                cedula,
+                telefono,
+              });
+            }}
+          >
+            Guardar Cambios
+          </button>
+
         </div>
         <div className="ajuste-form-group">
             <label>Nombres:</label>
@@ -221,6 +295,8 @@ const agregarEspecialidad = async () => {
             <label>Fecha de Nacimiento:</label>
             <input type="date" value={fechaNacimiento} onChange={(e) => setFechaNacimiento(e.target.value)} />
         </div>
+
+
         </div>
     </div>
 

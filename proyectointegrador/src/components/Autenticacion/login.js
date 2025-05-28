@@ -30,6 +30,9 @@ const Login = () => {
         } else if (userData.rol === "paciente") {
           navigate("/paciente");
           //window.location.href = "/paciente";
+        } else if (userData.rol === "admin") {
+          navigate("/admin");
+
         } else {
           window.location.href = "/no-autorizado";
         }

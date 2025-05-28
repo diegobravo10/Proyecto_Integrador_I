@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import '../Paciente/Navbar.css';
-const NavbarD = () => {
+const NavbarA = () => {
   return (
     <nav className="navbar">
   <div className="navbar-logo">MedCitas</div>
@@ -10,10 +10,10 @@ const NavbarD = () => {
 
     <div className="navbar-left">
       <ul className="navbar-links">
-        <li><Link to="/doctor">Citas</Link></li>
-        <li><Link to="/doctor/horario">Horarios</Link></li>
-        <li><Link to="/doctor/perfil">Perfil</Link></li>
-
+        <li><Link to="/admin">Citas</Link></li>
+        <li><Link to="/admin/horarios">Horarios</Link></li>
+        <li><Link to="/admin/ajustes">Ajustes</Link></li>
+        <li><Link to="/admin/perfil" >Perfil</Link></li>
         <li><Link to="/">Salir</Link></li>
       </ul>
       <div className="navbar-divider" />
@@ -28,4 +28,4 @@ const NavbarD = () => {
   );
 };
 
-export default NavbarD;
+export default NavbarA;

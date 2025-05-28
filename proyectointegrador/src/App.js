@@ -1,43 +1,56 @@
-import './App.css';
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
+// Layouts
+import AdminLayout from './components/Administrador/AdminLayout';
+import DoctorLayout from './components/Doctor/DoctorLayout';
+import PacienteLayout from './components/Paciente/PacienteLayout';
+
+// Auth
 import Login from './components/Autenticacion/login';
 import Registro from './components/Autenticacion/Registro';
-import Doctor from './components/Doctor/doctor';  
+
+// Paciente
 import Paciente from './components/Paciente/paciente';
-import Navbar from './components/Paciente/Navbar';
-import NavbarD from './components/Doctor/Navbard';
-import Ajuste from './components/Doctor/Ajuste';
 
-function AppContent() {
-  const location = useLocation();
-  const pathname = location.pathname;
+// Doctor
+import Doctor from './components/Doctor/doctor';  
+import Perfil from './components/Doctor/Perfil';
+import Horario from './components/Doctor/Horario';
 
-  const showNavbarPaciente = pathname.startsWith("/paciente");
-  const showNavbarDoctor = ["/doctor", "/ajustes", "/horarios"].some(path => pathname.startsWith(path));
-
-
-  return (
-    <>
-      {showNavbarPaciente && <Navbar />}
-      {showNavbarDoctor && <NavbarD />}
-      <Routes>
-        <Route path="/" element={<Login />} />
-        <Route path="/registro" element={<Registro />} />
-        <Route path="/doctor" element={<Doctor />} />
-        <Route path="/paciente" element={<Paciente />} />
-        <Route path="/ajustes" element={<Ajuste />} />
-      </Routes>
-    </>
-  );
-}
-
+// Administrador
+import Admin from './components/Administrador/Admin';
+import Ajustes from './components/Administrador/Ajuste';
+import Horarios from './components/Administrador/Horario';
 
 function App() {
   return (
     <div className="App">
       <Router>
-        <AppContent />
+        <Routes>
+          {/* Auth */}
+          <Route path="/" element={<Login />} />
+          <Route path="/registro" element={<Registro />} />
+
+          {/* Paciente con subrutas */}
+          <Route path="/paciente" element={<PacienteLayout />}>
+            <Route index element={<Paciente />} />
+            {/* Puedes agregar más subrutas si lo deseas */}
+          </Route>
+
+          {/* Doctor con subrutas */}
+          <Route path="/doctor" element={<DoctorLayout />}>
+            <Route index element={<Doctor />} />
+            <Route path="perfil" element={<Perfil />} />
+            <Route path="horario" element={<Horario />} />
+          </Route>
+
+          {/* Admin con subrutas */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<Admin />} />
+            <Route path="ajustes" element={<Ajustes />} />
+            <Route path="horarios" element={<Horarios />} /> 
+          </Route>
+        </Routes>
       </Router>
     </div>
   );

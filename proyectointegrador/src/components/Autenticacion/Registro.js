@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { db, auth } from "../servicios/firebase.js";
 import { doc, setDoc } from "firebase/firestore";
 import './registro.css'
+import { Timestamp } from "firebase/firestore";
 const Registro = () => {
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
@@ -36,6 +37,9 @@ const Registro = () => {
       alert("Por favor, completa todos los campos.");
       return;
     }
+    const fechaComoTimestamp = fechaNacimiento
+        ? Timestamp.fromDate(new Date(fechaNacimiento + "T12:00:00"))  // Añade hora del mediodía
+        : null;
 
     try {
       await setDoc(doc(db, "users", uid), {
@@ -46,7 +50,7 @@ const Registro = () => {
         cedula,
         direccion,
         telefono,
-        fechaNacimiento,
+        fechaNacimiento: fechaComoTimestamp,
         rol,
       });
 

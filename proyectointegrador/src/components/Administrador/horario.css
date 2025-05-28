@@ -1,0 +1,122 @@
+
+
+h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  color: #333;
+}
+
+input[type="datetime-local"] {
+  padding: 0.5rem;
+  font-size: 1rem;
+  margin-right: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+button {
+  padding: 0.5rem 1rem;
+  font-size: 0.95rem;
+  margin-right: 0.3rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+button:hover {
+  background-color: #ddd;
+}
+
+button:first-of-type {
+  background-color: #198754;
+  color: white;
+}
+
+button:first-of-type:hover {
+  background-color: #157347;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1.5rem;
+}
+
+th,
+td {
+  padding: 0.75rem;
+  text-align: center;
+  border-bottom: 1px solid #ccc;
+}
+
+th {
+  background-color: #343a40;
+  color: white;
+}
+
+td {
+  font-size: 0.95rem;
+}
+
+td button {
+  background-color: #0d6efd;
+  color: white;
+}
+
+td button:last-of-type {
+  background-color: #dc3545;
+}
+
+td button:hover {
+  opacity: 0.9;
+}
+.contenedorH{
+  text-align: center;
+}
+
+.form-selectores {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-selectores select,
+.form-selectores input[type="datetime-local"],
+.form-selectores button {
+  padding: 0.5rem 0.75rem;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  color: #333;
+  transition: all 0.2s ease;
+  min-width: 200px;
+}
+
+.form-selectores select:focus,
+.form-selectores input:focus {
+  outline: none;
+  border-color: #0077ff;
+  box-shadow: 0 0 0 2px rgba(0, 119, 255, 0.2);
+}
+
+.form-selectores button {
+  background-color: #0077ff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.form-selectores button:hover {
+  background-color: #005fcc;
+}
+
+.form-selectores button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
