@@ -43,7 +43,7 @@
   }
 
 }
- button {
+ .principal {
     padding: 3%;
     background-color: rgb(75, 179, 186);
     border-radius: 5px;
@@ -55,7 +55,7 @@
     margin-top: 20%;
   }
 
-button:hover {
+.principal:hover {
     background-color: rgb(21, 93, 93);
     
 }

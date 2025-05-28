@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { doc, getDoc, updateDoc, query, collection, where, getDocs } from "firebase/firestore";
+import { doc, getDoc, updateDoc, query, collection, where, getDocs, addDoc } from "firebase/firestore";
 import { db } from "../servicios/firebase";
 import { FaSearch } from "react-icons/fa";
+import { FaPlus } from "react-icons/fa";
 
 
 import './Ajuste.css';
@@ -14,7 +15,7 @@ const Ajuste = () => {
   const [telefono, setTelefono] = useState("");
   const [fechaNacimiento, setFechaNacimiento] = useState("");
   const [espid, setEspid] = useState("");
-
+  const [nuevaEspecialidad, setNuevaEspecialidad] = useState("");
   const [docId, setDocId] = useState("");
   const [busquedaCedula, setBusquedaCedula] = useState("");
   const [resultadoBusqueda, setResultadoBusqueda] = useState(null);
@@ -152,6 +153,25 @@ useEffect(() => {
   }
 };
 
+const agregarEspecialidad = async () => {
+  if (!nuevaEspecialidad.trim()) {
+    alert("Ingrese un nombre válido para la especialidad.");
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, "especialidad"), {
+      nombre: nuevaEspecialidad.trim()
+    });
+    alert("Especialidad agregada correctamente.");
+    setNuevaEspecialidad(""); // Limpiar el input
+  } catch (error) {
+    console.error("Error al agregar especialidad:", error);
+    alert("Ocurrió un error al agregar la especialidad.");
+  }
+};
+
+
 
   return (
     <>
@@ -235,6 +255,7 @@ useEffect(() => {
 
                <div className="action-section">
                     <label htmlFor="change-type" className="select-label">Especialidad:</label>
+                    <div>
                     <select
                         id="change-type"
                         className="change-type-select"
@@ -248,7 +269,7 @@ useEffect(() => {
                         </option>
                         ))}
                     </select>
-
+                     </div>
                     <button className="save-button" onClick={guardarCambiosAdmin}>
                         Guardar Cambios
                     </button>
@@ -261,7 +282,15 @@ useEffect(() => {
 
         <div className="ajuste-container">
 
-        <h2>Agregar Especialidades</h2>
+        <h2> <FaPlus style={{ marginLeft: "8px", color: "#28a745" }} /> Agregar Especialidades </h2>
+        <div className="agregar-especialidad">
+            <input
+                placeholder="Especialidad"
+                value={nuevaEspecialidad}
+                onChange={(e) => setNuevaEspecialidad(e.target.value)}
+            />
+            <button onClick={agregarEspecialidad}>Agregar</button>
+        </div>
 
 
         </div>

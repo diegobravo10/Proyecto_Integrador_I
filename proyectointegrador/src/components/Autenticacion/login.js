@@ -62,7 +62,7 @@ const Login = () => {
           <p className="parrafo">
           Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor.
           </p>
-        <button onClick={handleLogin}>Ingresar</button>
+        <button className="principal" onClick={handleLogin}>Ingresar</button>
       </div>
     </div>
   );

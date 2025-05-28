@@ -227,7 +227,7 @@
 }
 
 .change-type-select {
-  width: 100%;
+  width: 40%;
   padding: 10px 12px;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -254,4 +254,35 @@
     font-size: 17px;
      margin-bottom: 8px;
 }
+
+.agregar-especialidad input {
+  width: 20%;  
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-weight: bold;
+  border: 1px solid #ccc;
+  transition: border-color 0.3s;
+  font-size: 20px;
+}
+
+.agregar-especialidad input:focus{
+  outline: none;
+  border-color: #1abc9c;
+}
+
+.agregar-especialidad{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+}
+.agregar-especialidad button {
+    padding: 0.7%;
+    background-color: #1abc9c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 20px;
+}
+
 
