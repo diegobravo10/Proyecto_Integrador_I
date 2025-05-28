@@ -43,22 +43,22 @@
   }
 
 }
- .principal {
+button.principal {
     padding: 3%;
-    background-color: rgb(78, 177, 184);
-    border-radius: 5px;
+    background-color: rgb(78, 177, 184)!important;
+    border-radius: 7px;
     border: none;
     color: white;
     font-family: 'Times New Roman', Times, serif;
     font-size: 200%;
     font-weight: bold;
     margin-top: 20%;
-  }
-
-.principal:hover {
-    background-color: rgb(21, 93, 93);
-    
 }
+
+button.principal:hover {
+    background-color: rgb(21, 93, 93)!important;
+}
+
 
 h1 {
     color: rgb(77, 159, 184);

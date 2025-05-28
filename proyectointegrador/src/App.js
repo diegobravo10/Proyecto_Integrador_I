@@ -15,12 +15,13 @@ import Paciente from './components/Paciente/paciente';
 // Doctor
 import Doctor from './components/Doctor/doctor';  
 import Perfil from './components/Doctor/Perfil';
-import Horario from './components/Doctor/Horario';
+import Horario from './components/Doctor/Horariod';
 
 // Administrador
 import Admin from './components/Administrador/Admin';
 import Ajustes from './components/Administrador/Ajuste';
 import Horarios from './components/Administrador/Horario';
+import PerfilD from "./components/Administrador/perfil";
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
             <Route index element={<Admin />} />
             <Route path="ajustes" element={<Ajustes />} />
             <Route path="horarios" element={<Horarios />} /> 
+            <Route path="perfil" element={<PerfilD />} /> 
           </Route>
         </Routes>
       </Router>

@@ -131,7 +131,7 @@
 
 
 
-/*Para la segunda parte*/
+/*Para la segunda parte
 
 .admin-container {
   max-width: 90%;
@@ -164,7 +164,7 @@
 
 .cedula-input,
 .search-button {
-  height: 44px;         /* Igual altura para ambos */
+  height: 44px;         
   box-sizing: border-box;
   font-size: 18px;
   border-radius: 8px;
@@ -173,13 +173,13 @@
 .cedula-input {
   padding: 0 16px;
   border: 1px solid #ccc;
-  width: 250px;         /* Ajusta el ancho según tu diseño */         /* Elimina flex: 1 para evitar que crezca */
+  width: 250px;        
 }
 
 .search-button {
   align-items: center;
   justify-content: center;
-  padding: 0 24px;      /* Solo padding horizontal */
+  padding: 0 24px;      /* Solo padding horizontal 
   font-weight: bold;
   background-color: #5277df;
   color: #fff;
@@ -284,5 +284,5 @@
     border-radius: 5px;
     font-size: 20px;
 }
-
+*/
 

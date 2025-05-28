@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { collection, query, where, getDocs, updateDoc, doc, deleteDoc, addDoc, orderBy, limit } from "firebase/firestore";
 import { db } from "../servicios/firebase";
-import './horario.css'
+import './horariod.css'
 
 const Horario = () => {
   const [horarios, setHorarios] = useState([]);
