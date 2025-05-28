@@ -58,3 +58,16 @@
   font-weight: 500;
   color: #333;
 }
+
+.logout-button {
+  background: none !important;
+  border: none;
+  color: inherit !important;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+.logout-button:hover {
+  color: #d00;
+}

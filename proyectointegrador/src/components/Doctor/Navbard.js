@@ -1,5 +1,6 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { getAuth, signOut } from "firebase/auth";
+import { useNavigate, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { doc, getDoc} from "firebase/firestore";
 import { db } from "../servicios/firebase";
@@ -9,6 +10,19 @@ const NavbarD = () => {
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [docId, setDocId] = useState("");
+  const auth = getAuth();
+  const navigate = useNavigate();
+
+  // Función para cerrar sesión
+  const handleLogout = () => {
+    signOut(auth)
+      .then(() => {
+        navigate("/"); // Asegúrate de que esta ruta exista
+      })
+      .catch((error) => {
+        console.error("Error al cerrar sesión:", error);
+      });
+  };
 
  useEffect(() => {
     const storedId = localStorage.getItem("uid");
@@ -50,7 +64,11 @@ const NavbarD = () => {
         <li><Link to="/doctor/horario">Horarios</Link></li>
         <li><Link to="/doctor/perfil">Perfil</Link></li>
 
-        <li><Link to="/">Salir</Link></li>
+        <li>
+              <button onClick={handleLogout} className="logout-button">
+                Salir
+              </button>
+            </li>
       </ul>
       <div className="navbar-divider" />
     </div>

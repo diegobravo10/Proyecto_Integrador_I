@@ -1,156 +1,164 @@
 import { useEffect, useState } from "react";
-import { collection, query, where, getDocs, updateDoc, doc, deleteDoc, addDoc, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, getDocs, updateDoc, doc, deleteDoc, addDoc } from "firebase/firestore";
 import { db } from "../servicios/firebase";
 import './horario.css';
 
 const HorarioD = () => {
-  const [especialidades, setEspecialidades] = useState([]);
-  const [doctores, setDoctores] = useState([]);
-  const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState("");
-  const [doctorSeleccionado, setDoctorSeleccionado] = useState("");
   const [horarios, setHorarios] = useState([]);
   const [nuevaFechaHora, setNuevaFechaHora] = useState("");
-  
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState("");
+  const [doctorId, setDoctorId] = useState("");
 
-useEffect(() => {
-  const obtenerEspecialidades = async () => {
-    try {
-      const snap = await getDocs(collection(db, "especialidad"));
-      const lista = snap.docs.map(doc => ({
-        id: doc.id,
-        nombre: doc.data().nombre
-      }));
-      setEspecialidades(lista);
-    } catch (error) {
-      console.error("Error al obtener especialidades:", error);
+  useEffect(() => {
+    const id = localStorage.getItem("uid");
+    if (id) {
+      setDoctorId(id);
+      cargarHorarios(id);
+    } else {
+      setError("No se encontró doctorId en el localStorage.");
     }
-  };
+  }, []);
 
-  obtenerEspecialidades();
-}, []);
+const procesarFecha = (fechaFirestore) => {
+  try {
+    if (!fechaFirestore) return null;
 
-useEffect(() => {
-  if (doctorSeleccionado) {
-    cargarHorarios(doctorSeleccionado);
-  } else {
-    setHorarios([]); // Limpia los horarios si no hay doctor seleccionado
+    if (fechaFirestore.seconds) {
+      return new Date(fechaFirestore.seconds * 1000);
+    }
+
+    if (typeof fechaFirestore.toDate === 'function') {
+      return fechaFirestore.toDate();
+    }
+
+    if (typeof fechaFirestore === 'string') {
+      return new Date(fechaFirestore);
+    }
+
+    if (fechaFirestore instanceof Date) {
+      return fechaFirestore;
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Error al procesar fecha:", fechaFirestore, error);
+    return null;
   }
-}, [doctorSeleccionado]);
+};
 
 
-useEffect(() => {
-  const obtenerDoctores = async () => {
-    if (!especialidadSeleccionada) return;
+
+
+  const cargarHorarios = async (id) => {
     try {
-      const q = query(
-        collection(db, "users"),
-        where("rol", "==", "doctor"),
-        where("especialidadid", "==", especialidadSeleccionada)
-      );
-      const snap = await getDocs(q);
-      const lista = snap.docs.map(doc => ({
-        id: doc.id,
-        nombre: `${doc.data().nombre} ${doc.data().apellido}`
-      }));
-      setDoctores(lista);
-      setDoctorSeleccionado(""); // Reiniciar selección anterior
-    } catch (error) {
-      console.error("Error al obtener doctores:", error);
-    }
-  };
-
-  obtenerDoctores();
-}, [especialidadSeleccionada]);
-
-
-  const cargarHorarios = async (doctorId) => {
-    try {
-      const q = query(
-        collection(db, "horarios"),
-        where("doctorid", "==", doctorId),
-        orderBy("fecha", "desc"),
-        limit(30)
-      );
+      setCargando(true);
+      const q = query(collection(db, "horarios"), where("doctorid", "==", id));
       const snapshot = await getDocs(q);
-      const lista = snapshot.docs.map(docSnap => ({
-        id: docSnap.id,
-        ...docSnap.data(),
-        fecha: docSnap.data().fecha.toDate()
-      }));
-      setHorarios(lista);
+
+      if (snapshot.empty) {
+        setHorarios([]);
+        return;
+      }
+
+      const lista = snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          ...data,
+          fecha: procesarFecha(data.fecha),
+        };
+      });
+
+      lista.sort((a, b) => b.fecha?.getTime() - a.fecha?.getTime());
+      setHorarios(lista.slice(0, 30));
     } catch (error) {
       console.error("Error al cargar horarios:", error);
+      setError("Error al cargar horarios: " + error.message);
+    } finally {
+      setCargando(false);
     }
   };
 
-const agregarHorario = async () => {
-    if (!nuevaFechaHora || !doctorSeleccionado) return;
+  const agregarHorario = async () => {
+    if (!nuevaFechaHora || !doctorId) {
+      alert("Por favor complete todos los campos");
+      return;
+    }
 
     try {
+      setCargando(true);
       const fecha = new Date(nuevaFechaHora);
       await addDoc(collection(db, "horarios"), {
-        doctorid: doctorSeleccionado,
+        doctorid: doctorId,
         fecha,
         disponibilidad: true
       });
-      alert("Agregado Correctamente");
       setNuevaFechaHora("");
-      cargarHorarios(doctorSeleccionado);
+      await cargarHorarios(doctorId);
+      alert("Agregado correctamente");
     } catch (error) {
       console.error("Error al agregar horario:", error);
+      alert("Error al agregar horario: " + error.message);
+    } finally {
+      setCargando(false);
     }
   };
 
-
   const cambiarEstado = async (horario) => {
     try {
+      setCargando(true);
       const ref = doc(db, "horarios", horario.id);
       await updateDoc(ref, { disponibilidad: !horario.disponibilidad });
-      cargarHorarios(doctorSeleccionado);
+      await cargarHorarios(doctorId);
     } catch (error) {
       console.error("Error al cambiar estado:", error);
+      alert("Error al cambiar estado: " + error.message);
+    } finally {
+      setCargando(false);
     }
   };
 
   const eliminarHorario = async (horario) => {
+    if (!window.confirm("¿Está seguro de eliminar este horario?")) return;
     try {
+      setCargando(true);
       const ref = doc(db, "horarios", horario.id);
       await deleteDoc(ref);
-      cargarHorarios(doctorSeleccionado);
+      await cargarHorarios(doctorId);
     } catch (error) {
       console.error("Error al eliminar horario:", error);
+      alert("Error al eliminar horario: " + error.message);
+    } finally {
+      setCargando(false);
     }
   };
 
   return (
     <div className="contenedorH">
       <h2>Gestión de Horarios</h2>
+
+      {error && (
+        <div style={{ color: 'red', marginBottom: '10px' }}>{error}</div>
+      )}
+
       <div className="form-selectores">
-        <select value={especialidadSeleccionada} onChange={(e) => setEspecialidadSeleccionada(e.target.value)}>
-          <option value="">Seleccione Especialidad</option>
-          {especialidades.map((e) => (
-            <option key={e.id} value={e.id}>{e.nombre}</option>
-          ))}
-        </select>
-
-        <select value={doctorSeleccionado} onChange={(e) => setDoctorSeleccionado(e.target.value)} disabled={!especialidadSeleccionada}>
-          <option value="">Seleccione Doctor</option>
-          {doctores.map((d) => (
-            <option key={d.id} value={d.id}>{d.nombre}</option>
-          ))}
-        </select>
-
         <input
           type="datetime-local"
           value={nuevaFechaHora}
           onChange={(e) => setNuevaFechaHora(e.target.value)}
+          disabled={cargando}
         />
 
-        <button onClick={agregarHorario} disabled={!doctorSeleccionado || !nuevaFechaHora}>
-          Agregar
+        <button 
+          onClick={agregarHorario} 
+          disabled={!nuevaFechaHora || cargando}
+        >
+          {cargando ? "Agregando..." : "Agregar"}
         </button>
       </div>
 
+      {cargando && <p>Cargando...</p>}
 
       <table>
         <thead>
@@ -161,18 +169,30 @@ const agregarHorario = async () => {
           </tr>
         </thead>
         <tbody>
-          {horarios.map((h, i) => (
-            <tr key={i}>
-              <td>{h.fecha.toLocaleString()}</td>
-              <td style={{ color: h.disponibilidad ? "green" : "red" }}>
-                {h.disponibilidad ? "Disponible" : "No disponible"}
-              </td>
-              <td>
-                <button onClick={() => cambiarEstado(h)}>Cambiar Estado</button>
-                <button onClick={() => eliminarHorario(h)}>Eliminar</button>
+          {horarios.length === 0 && !cargando ? (
+            <tr>
+              <td colSpan="3" style={{ textAlign: 'center' }}>
+                No hay horarios disponibles
               </td>
             </tr>
-          ))}
+          ) : (
+            horarios.map((h) => (
+              <tr key={h.id}>
+                <td>{h.fecha?.toLocaleString("es-ES") || "Fecha no válida"}</td>
+                <td style={{ color: h.disponibilidad ? "green" : "red" }}>
+                  {h.disponibilidad ? "Disponible" : "No disponible"}
+                </td>
+                <td>
+                  <button onClick={() => cambiarEstado(h)} disabled={cargando}>
+                    Cambiar Estado
+                  </button>
+                  <button onClick={() => eliminarHorario(h)} disabled={cargando}>
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </table>
     </div>

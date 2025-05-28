@@ -314,4 +314,66 @@
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
+.form-container {
+  max-width: 400px;
+  margin: 20px auto;
+  padding: 20px;
+  border-radius: 10px;
+  background-color: #f8f8f8;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  font-family: Arial, sans-serif;
+}
+
+.form-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.form-container label {
+  display: block;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.input-group {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.input-group input {
+  flex: 1;
+}
+
+.form-container input[type="text"],
+.form-container input[type="date"] {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+.btn-registrar {
+  width: 100%;
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-registrar:hover {
+  background-color: #0056b3;
+}
+
+.mensaje {
+  margin-top: 15px;
+  color: green;
+  text-align: center;
+}
+
+
 

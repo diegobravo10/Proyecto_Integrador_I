@@ -39,7 +39,7 @@ const Login = () => {
       } else {
         // Usuario no existe, redirigir a formulario de registro
         // Guarda temporalmente su UID y correo en localStorage si quieres usarlo en la siguiente página
-        localStorage.setItem("uid", uid);
+        
         localStorage.setItem("email", email);
         navigate("/registro");
 
@@ -48,6 +48,7 @@ const Login = () => {
 
         window.location.href = "/registro"; // Redirige al formulario para completar datos
       }
+      localStorage.setItem("uid", uid);
 
     } catch (error) {
       console.error("Error de login:", error);
