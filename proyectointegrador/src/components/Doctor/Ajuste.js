@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, query, collection, where, getDocs } from "firebase/firestore";
 import { db } from "../servicios/firebase";
+import { FaSearch } from "react-icons/fa";
+
+
 import './Ajuste.css';
 const Ajuste = () => {
   const [correo, setCorreo] = useState("");
@@ -10,8 +13,34 @@ const Ajuste = () => {
   const [direccion, setDireccion] = useState("");
   const [telefono, setTelefono] = useState("");
   const [fechaNacimiento, setFechaNacimiento] = useState("");
+  const [espid, setEspid] = useState("");
 
   const [docId, setDocId] = useState("");
+  const [busquedaCedula, setBusquedaCedula] = useState("");
+  const [resultadoBusqueda, setResultadoBusqueda] = useState(null);
+  const [especialidades, setEspecialidades] = useState([]);
+const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState("");
+
+
+const buscarPorCedula = async () => {
+  try {
+    const q = query(collection(db, "users"), where("cedula", "==", busquedaCedula));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      alert("No se encontró ningún usuario con esa cédula.");
+      setResultadoBusqueda(null);
+      return;
+    }
+
+    const resultados = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    setResultadoBusqueda(resultados[0]); // Asumimos que solo uno tendrá esa cédula
+
+  } catch (error) {
+    console.error("Error al buscar:", error);
+  }
+};
+
 
   useEffect(() => {
     const storedId = localStorage.getItem("uid");
@@ -21,6 +50,8 @@ const Ajuste = () => {
         try {
           const userRef = doc(db, "users", storedId);
           const docSnap = await getDoc(userRef);
+
+         
           if (docSnap.exists()) {
             const datos = docSnap.data();
             setCorreo(datos.correo || "");
@@ -29,6 +60,12 @@ const Ajuste = () => {
             setCedula(datos.cedula || "");
             setDireccion(datos.direccion || "");
             setTelefono(datos.telefono || "");
+
+            const espe = doc(db, "especialidad", datos.especialidadid);
+            const docEspe = await getDoc(espe);
+            const datEsp = docEspe.data();
+
+            setEspid(datEsp.nombre || "")
 
             if (datos.fechaNacimiento && datos.fechaNacimiento.toDate) {
                     const fecha = datos.fechaNacimiento.toDate();
@@ -53,11 +90,30 @@ const Ajuste = () => {
     }
   }, []);
 
+
+useEffect(() => {
+  const obtenerEspecialidades = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "especialidad"));
+      const lista = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        nombre: doc.data().nombre
+      }));
+      setEspecialidades(lista);
+    } catch (error) {
+      console.error("Error al obtener especialidades:", error);
+    }
+  };
+
+  obtenerEspecialidades();
+}, []);
+
+
   const handleGuardar = async () => {
     if (!docId) return;
 
     try {
-      const userRef = doc(db, "doctores", docId);
+      const userRef = doc(db, "users", docId);
       await updateDoc(userRef, {
         nombre,
         apellido,
@@ -74,20 +130,47 @@ const Ajuste = () => {
     }
   };
 
+  const guardarCambiosAdmin = async () => {
+  if (!resultadoBusqueda || !especialidadSeleccionada) {
+    alert("Seleccione una especialidad válida.");
+    return;
+  }
+
+  try {
+    const userRef = doc(db, "users", resultadoBusqueda.id);
+    await updateDoc(userRef, {
+      especialidadid: especialidadSeleccionada,
+      rol: "doctor"
+    });
+    alert("Especialidad y rol actualizados correctamente.");
+     setResultadoBusqueda(null);
+    setBusquedaCedula("");
+    setEspecialidadSeleccionada("");
+  } catch (error) {
+    console.error("Error al guardar cambios administrativos:", error);
+    alert("Ocurrió un error al guardar los cambios.");
+  }
+};
+
+
   return (
     <>
      <div className="ajuste-container">
-        <div className="ajuste-btn-top">
-            <button className="ajuste-btn-guardar" onClick={handleGuardar}>
-            Guardar Cambios
-            </button>
-        </div>
+        
         <div>
         <h2>Datos Personales</h2>
 
-        <div className="ajuste-form-group">
-            <label>Correo electrónico:</label>
-            <input type="email" value={correo} disabled />
+       <div className="ajuste-form-group-row">
+            <div className="ajuste-form-left">
+                <label>Correo electrónico:</label>
+                <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)}/>
+            </div>
+
+            <div className="ajuste-form-right">
+                <button className="ajuste-btn-guardar" onClick={handleGuardar}>
+                Guardar Cambios
+                </button>
+            </div>
         </div>
         <div className="ajuste-form-group">
             <label>Nombres:</label>
@@ -106,15 +189,82 @@ const Ajuste = () => {
             <input type="text" value={direccion} onChange={(e) => setDireccion(e.target.value)} />
         </div>
         <div className="ajuste-form-group">
+            <label>Especialidad:</label>
+            <input type="text" value={espid} disabled />
+        </div>
+        <div className="ajuste-form-group">
             <label>Teléfono:</label>
             <input type="text" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
         </div>
+
         <div className="ajuste-form-group">
             <label>Fecha de Nacimiento:</label>
             <input type="date" value={fechaNacimiento} onChange={(e) => setFechaNacimiento(e.target.value)} />
         </div>
         </div>
     </div>
+
+
+    <div className="ajuste-container">
+        <h2 className="admin-title">Cambios Administrativos</h2>
+        <p className="instrucciones-admin">
+            Ingrese la <strong>cédula</strong> del usuario y seleccione la <strong>especialidad</strong> para asignarlo como <strong>doctor</strong>.
+        </p>
+        <div className="search-section">
+              <input
+                className="cedula-input"
+                placeholder="Cédula"
+                value={busquedaCedula}
+                onChange={(e) => setBusquedaCedula(e.target.value)}
+              />
+              <button className="search-button" onClick={buscarPorCedula}>
+                <FaSearch />
+                Buscar
+              </button>
+        </div>
+
+        {resultadoBusqueda && (
+            <div className="result-card">
+                <h3 className="result-title">Información del Usuario</h3>
+                <div className="user-details">
+                    <p><strong>Nombre:</strong> {resultadoBusqueda.nombre}</p>
+                    <p><strong>Apellido:</strong> {resultadoBusqueda.apellido}</p>
+                    <p><strong>Correo:</strong> {resultadoBusqueda.correo}</p>
+                    {/* Add more fields if needed */}
+                </div>
+
+               <div className="action-section">
+                    <label htmlFor="change-type" className="select-label">Especialidad:</label>
+                    <select
+                        id="change-type"
+                        className="change-type-select"
+                        value={especialidadSeleccionada}
+                        onChange={(e) => setEspecialidadSeleccionada(e.target.value)}
+                    >
+                        <option value="">Seleccione la especialidad</option>
+                        {especialidades.map((esp) => (
+                        <option key={esp.id} value={esp.id}>
+                            {esp.nombre}
+                        </option>
+                        ))}
+                    </select>
+
+                    <button className="save-button" onClick={guardarCambiosAdmin}>
+                        Guardar Cambios
+                    </button>
+                </div>
+
+            </div>
+        )}
+
+        </div>
+
+        <div className="ajuste-container">
+
+        <h2>Agregar Especialidades</h2>
+
+
+        </div>
     </>
   );
 };

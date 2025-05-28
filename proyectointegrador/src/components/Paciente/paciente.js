@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import './paciente.css';
-import Navbar from './Navbar'; 
 
 const Paciente = () => {
   const [specialties, setSpecialties] = useState([]);
