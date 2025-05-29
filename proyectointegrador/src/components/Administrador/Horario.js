@@ -3,12 +3,51 @@ import { collection, query, where, getDocs, updateDoc, doc, deleteDoc, addDoc } 
 import { db } from "../servicios/firebase";
 import './horario.css';
 
-const HorarioD = () => {
+const HorarioAdmin = () => {
   const [horarios, setHorarios] = useState([]);
   const [nuevaFechaHora, setNuevaFechaHora] = useState("");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState("");
   const [doctorId, setDoctorId] = useState("");
+  const [especialidades, setEspecialidades] = useState([]);
+const [doctores, setDoctores] = useState([]);
+const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState("");
+const [doctorSeleccionado, setDoctorSeleccionado] = useState("");
+
+  useEffect(() => {
+  const cargarEspecialidades = async () => {
+    try {
+      const snapshot = await getDocs(collection(db, "especialidad"));
+      const lista = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setEspecialidades(lista);
+    } catch (error) {
+      console.error("Error al cargar especialidades:", error);
+    }
+  };
+
+  cargarEspecialidades();
+}, []);
+
+  useEffect(() => {
+  const cargarDoctores = async () => {
+    if (!especialidadSeleccionada) {
+      setDoctores([]);
+      return;
+    }
+
+    try {
+      const q = query(collection(db, "users"), where("especialidadid", "==", especialidadSeleccionada));
+      const snapshot = await getDocs(q);
+      const lista = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setDoctores(lista);
+    } catch (error) {
+      console.error("Error al cargar doctores:", error);
+    }
+  };
+
+  cargarDoctores();
+}, [especialidadSeleccionada]);
+
 
   useEffect(() => {
     const id = localStorage.getItem("uid");
@@ -46,42 +85,49 @@ const procesarFecha = (fechaFirestore) => {
     return null;
   }
 };
+  useEffect(() => {
+  if (doctorSeleccionado) {
+    cargarHorarios(doctorSeleccionado);
+  } else {
+    setHorarios([]);
+  }
+}, [doctorSeleccionado]);
 
 
 
 
-  const cargarHorarios = async (id) => {
-    try {
-      setCargando(true);
-      const q = query(collection(db, "horarios"), where("doctorid", "==", id));
-      const snapshot = await getDocs(q);
+  const cargarHorarios = async (doctorId) => {
+  try {
+    setCargando(true);
+    const q = query(collection(db, "horarios"), where("doctorid", "==", doctorId));
+    const snapshot = await getDocs(q);
 
-      if (snapshot.empty) {
-        setHorarios([]);
-        return;
-      }
-
-      const lista = snapshot.docs.map(docSnap => {
-        const data = docSnap.data();
-        return {
-          id: docSnap.id,
-          ...data,
-          fecha: procesarFecha(data.fecha),
-        };
-      });
-
-      lista.sort((a, b) => b.fecha?.getTime() - a.fecha?.getTime());
-      setHorarios(lista.slice(0, 30));
-    } catch (error) {
-      console.error("Error al cargar horarios:", error);
-      setError("Error al cargar horarios: " + error.message);
-    } finally {
-      setCargando(false);
+    if (snapshot.empty) {
+      setHorarios([]);
+      return;
     }
-  };
+
+    const lista = snapshot.docs.map(docSnap => {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        ...data,
+        fecha: procesarFecha(data.fecha),
+      };
+    });
+
+    lista.sort((a, b) => b.fecha?.getTime() - a.fecha?.getTime());
+    setHorarios(lista.slice(0, 30));
+  } catch (error) {
+    console.error("Error al cargar horarios:", error);
+    setError("Error al cargar horarios: " + error.message);
+  } finally {
+    setCargando(false);
+  }
+};
 
   const agregarHorario = async () => {
-    if (!nuevaFechaHora || !doctorId) {
+    if (!nuevaFechaHora || !doctorSeleccionado) {
       alert("Por favor complete todos los campos");
       return;
     }
@@ -90,13 +136,12 @@ const procesarFecha = (fechaFirestore) => {
       setCargando(true);
       const fecha = new Date(nuevaFechaHora);
       await addDoc(collection(db, "horarios"), {
-        doctorid: doctorId,
+        doctorid: doctorSeleccionado,
         fecha,
         disponibilidad: true
       });
       setNuevaFechaHora("");
-      await cargarHorarios(doctorId);
-      alert("Agregado correctamente");
+      await cargarHorarios(doctorSeleccionado);
     } catch (error) {
       console.error("Error al agregar horario:", error);
       alert("Error al agregar horario: " + error.message);
@@ -110,7 +155,7 @@ const procesarFecha = (fechaFirestore) => {
       setCargando(true);
       const ref = doc(db, "horarios", horario.id);
       await updateDoc(ref, { disponibilidad: !horario.disponibilidad });
-      await cargarHorarios(doctorId);
+      await cargarHorarios(doctorSeleccionado);
     } catch (error) {
       console.error("Error al cambiar estado:", error);
       alert("Error al cambiar estado: " + error.message);
@@ -125,7 +170,7 @@ const procesarFecha = (fechaFirestore) => {
       setCargando(true);
       const ref = doc(db, "horarios", horario.id);
       await deleteDoc(ref);
-      await cargarHorarios(doctorId);
+      await cargarHorarios(doctorSeleccionado);
     } catch (error) {
       console.error("Error al eliminar horario:", error);
       alert("Error al eliminar horario: " + error.message);
@@ -143,6 +188,34 @@ const procesarFecha = (fechaFirestore) => {
       )}
 
       <div className="form-selectores">
+        <label>
+          Especialidad:
+          <select
+            value={especialidadSeleccionada}
+            onChange={(e) => setEspecialidadSeleccionada(e.target.value)}
+            disabled={cargando}
+          >
+            <option value="">Seleccione una especialidad</option>
+            {especialidades.map((esp) => (
+              <option key={esp.id} value={esp.id}>{esp.nombre}</option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Doctor:
+          <select
+            value={doctorSeleccionado}
+            onChange={(e) => setDoctorSeleccionado(e.target.value)}
+            disabled={cargando || !especialidadSeleccionada}
+          >
+            <option value="">Seleccione un doctor</option>
+            {doctores.map((doc) => (
+              <option key={doc.id} value={doc.id}>{doc.nombre +' ' + doc.apellido}</option>
+            ))}
+          </select>
+        </label>
+
         <input
           type="datetime-local"
           value={nuevaFechaHora}
@@ -150,15 +223,18 @@ const procesarFecha = (fechaFirestore) => {
           disabled={cargando}
         />
 
-        <button 
+       <button 
           onClick={agregarHorario} 
-          disabled={!nuevaFechaHora || cargando}
+          disabled={!nuevaFechaHora || !doctorSeleccionado || cargando}
         >
           {cargando ? "Agregando..." : "Agregar"}
         </button>
+
       </div>
 
       {cargando && <p>Cargando...</p>}
+
+      
 
       <table>
         <thead>
@@ -199,4 +275,4 @@ const procesarFecha = (fechaFirestore) => {
   );
 };
 
-export default HorarioD;
+export default HorarioAdmin;
