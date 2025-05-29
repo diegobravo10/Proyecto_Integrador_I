@@ -11,6 +11,7 @@ import Registro from './components/Autenticacion/Registro';
 
 // Paciente
 import Paciente from './components/Paciente/paciente';
+import PerfilP from './components/Paciente/Perfil';
 
 // Doctor
 import Doctor from './components/Doctor/doctor';  
@@ -35,6 +36,7 @@ function App() {
           {/* Paciente con subrutas */}
           <Route path="/paciente" element={<PacienteLayout />}>
             <Route index element={<Paciente />} />
+            <Route path="perfil" element={<PerfilP />} />
             {/* Puedes agregar más subrutas si lo deseas */}
           </Route>
 
