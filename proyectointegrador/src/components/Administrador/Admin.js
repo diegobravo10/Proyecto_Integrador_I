@@ -535,6 +535,7 @@ const Admin = () => {
 
       <div className="form-container1">
         <h2>Agregar Nueva Cita</h2>
+        <p>Por favor seleccionar el doctor antes de agregar una cita.</p>
 
         <label>Cédula del paciente:</label>
         <div className="input-group">

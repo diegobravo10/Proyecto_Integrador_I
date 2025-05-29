@@ -23,7 +23,7 @@ const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState("");
 const [especialidadFiltrada, setEspecialidadFiltrada] = useState("");
 const [doctoresPorEspecialidad, setDoctoresPorEspecialidad] = useState([]);
 const [doctorSeleccionado, setDoctorSeleccionado] = useState(null);
-
+const [rolSeleccionado, setRolSeleccionado] = useState('');
 
 
 const buscarPorCedula = async () => {
@@ -132,21 +132,33 @@ const obtenerDoctoresPorEspecialidad = async (especialidadId) => {
 
 
   const guardarCambiosAdmin = async () => {
-  if (!resultadoBusqueda || !especialidadSeleccionada) {
-    alert("Seleccione una especialidad válida.");
+  if (!resultadoBusqueda || !rolSeleccionado) {
+    alert("Seleccione un rol válido.");
+    return;
+  }
+
+  if (rolSeleccionado === "doctor" && !especialidadSeleccionada) {
+    alert("Seleccione una especialidad válida para el doctor.");
     return;
   }
 
   try {
     const userRef = doc(db, "users", resultadoBusqueda.id);
-    await updateDoc(userRef, {
-      especialidadid: especialidadSeleccionada,
-      rol: "doctor"
-    });
-    alert("Especialidad y rol actualizados correctamente.");
-     setResultadoBusqueda(null);
+
+    // Prepara los datos a actualizar
+    const datosActualizar = {
+      rol: rolSeleccionado,
+      especialidadid: rolSeleccionado === "doctor" ? especialidadSeleccionada : null,
+    };
+
+    // Actualiza el documento
+    await updateDoc(userRef, datosActualizar);
+
+    alert("Rol y especialidad actualizados correctamente.");
+    setResultadoBusqueda(null);
     setBusquedaCedula("");
     setEspecialidadSeleccionada("");
+    setRolSeleccionado("");
   } catch (error) {
     console.error("Error al guardar cambios administrativos:", error);
     alert("Ocurrió un error al guardar los cambios.");
@@ -205,10 +217,21 @@ const guardarCambiosDoctor = async (doctor) => {
             <select
               value={especialidadFiltrada}
               onChange={(e) => {
-                const selected = e.target.value;
-                setEspecialidadFiltrada(selected);
-                obtenerDoctoresPorEspecialidad(selected);
-              }}
+              const selected = e.target.value;
+              setEspecialidadFiltrada(selected);
+              setDoctorSeleccionado(null);
+              // Limpiar campos al cambiar especialidad
+              setCorreo("");
+              setNombre("");
+              setApellido("");
+              setCedula("");
+              setDireccion("");
+              setTelefono("");
+              setFechaNacimiento("");
+              setEspid("");
+              obtenerDoctoresPorEspecialidad(selected);
+            }}
+
             >
               <option value="">Seleccione una especialidad</option>
               {especialidades.map((esp) => (
@@ -301,60 +324,74 @@ const guardarCambiosDoctor = async (doctor) => {
     </div>
 
 
-    <div className="ajuste-container">
-        <h2 className="admin-title">Cambios Administrativos</h2>
-        <p className="instrucciones-admin">
-            Ingrese la <strong>cédula</strong> del usuario y seleccione la <strong>especialidad</strong> para asignarlo como <strong>doctor</strong>.
-        </p>
-        <div className="search-section">
+       <div className="ajuste-container">
+          <h2 className="admin-title">Cambios Administrativos</h2>
+          <p className="instrucciones-admin">
+              Ingrese la <strong>cédula</strong> del usuario y seleccione el <strong>rol</strong> para asignarlo como <strong>admin, paciente o doctor</strong>.
+          </p>
+          <div className="search-section">
               <input
-                className="cedula-input"
-                placeholder="Cédula"
-                value={busquedaCedula}
-                onChange={(e) => setBusquedaCedula(e.target.value)}
+                  className="cedula-input"
+                  placeholder="Cédula"
+                  value={busquedaCedula}
+                  onChange={(e) => setBusquedaCedula(e.target.value)}
               />
               <button className="search-button" onClick={buscarPorCedula}>
-                <FaSearch />
-                Buscar
+                  <FaSearch />
+                  Buscar
               </button>
-        </div>
+          </div>
 
-        {resultadoBusqueda && (
-            <div className="result-card">
-                <h3 className="result-title">Información del Usuario</h3>
-                <div className="user-details">
-                    <p><strong>Nombre:</strong> {resultadoBusqueda.nombre}</p>
-                    <p><strong>Apellido:</strong> {resultadoBusqueda.apellido}</p>
-                    <p><strong>Correo:</strong> {resultadoBusqueda.correo}</p>
-                    {/* Add more fields if needed */}
-                </div>
+          {resultadoBusqueda && (
+              <div className="result-card">
+                  <h3 className="result-title">Información del Usuario</h3>
+                  <div className="user-details">
+                      <p><strong>Nombre:</strong> {resultadoBusqueda.nombre}</p>
+                      <p><strong>Apellido:</strong> {resultadoBusqueda.apellido}</p>
+                      <p><strong>Correo:</strong> {resultadoBusqueda.correo}</p>
+                      <p><strong>Rol:</strong> {resultadoBusqueda.rol}</p>
+                      {/* Puedes agregar más campos si lo necesitas */}
+                  </div>
 
-               <div className="action-section">
-                    <label htmlFor="change-type" className="select-label">Especialidad:</label>
-                    <div>
-                    <select
-                        id="change-type"
-                        className="change-type-select"
-                        value={especialidadSeleccionada}
-                        onChange={(e) => setEspecialidadSeleccionada(e.target.value)}
-                    >
-                        <option value="">Seleccione la especialidad</option>
-                        {especialidades.map((esp) => (
-                        <option key={esp.id} value={esp.id}>
-                            {esp.nombre}
-                        </option>
-                        ))}
-                    </select>
-                     </div>
-                    <button className="save-button" onClick={guardarCambiosAdmin}>
-                        Guardar Cambios
-                    </button>
-                </div>
+                  <div className="action-section">
+                      <label htmlFor="rol" className="select-label">Rol:</label>
+                      <select
+                          id="rol"
+                          className="change-type-select"
+                          value={rolSeleccionado}
+                          onChange={(e) => setRolSeleccionado(e.target.value)}
+                      >
+                          <option value="">Seleccione un rol</option>
+                          <option value="admin">Admin</option>
+                          <option value="paciente">Paciente</option>
+                          <option value="doctor">Doctor</option>
+                      </select>
 
-            </div>
-        )}
+                      {/* Mostrar el select de especialidades SOLO si el rol es "doctor" */}
+                      {rolSeleccionado === 'doctor' && (
+                          <>
+                              <label htmlFor="especialidad" className="select-label">Especialidad:</label>
+                              <select
+                                  id="especialidad"
+                                  className="change-type-select"
+                                  value={especialidadSeleccionada}
+                                  onChange={(e) => setEspecialidadSeleccionada(e.target.value)}
+                              >
+                                  <option value="">Seleccione la especialidad</option>
+                                  {especialidades.map((esp) => (
+                                      <option key={esp.id} value={esp.id}>{esp.nombre}</option>
+                                  ))}
+                              </select>
+                          </>
+                      )}
 
-        </div>
+                      <button className="save-button" onClick={guardarCambiosAdmin}>
+                          Guardar Cambios
+                      </button>
+                  </div>
+              </div>
+          )}
+      </div>
 
         <div className="ajuste-container">
 
