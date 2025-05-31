@@ -269,25 +269,6 @@ const guardarCambiosDoctor = async (doctor) => {
                 <input type="email" value={correo} disabled/>
             </div>
 
-           <button
-            className="ajuste-btn-guardar"
-            onClick={() => {
-              if (!doctorSeleccionado) {
-                alert("Seleccione un doctor primero.");
-                return;
-              }
-              guardarCambiosDoctor({
-                id: doctorSeleccionado.id,
-                nombre,
-                apellido,
-                cedula,
-                telefono,
-              });
-            }}
-          >
-            Guardar Cambios
-          </button>
-
         </div>
         <div className="ajuste-form-group">
             <label>Nombres:</label>
@@ -318,8 +299,24 @@ const guardarCambiosDoctor = async (doctor) => {
             <label>Fecha de Nacimiento:</label>
             <input type="date" value={fechaNacimiento} onChange={(e) => setFechaNacimiento(e.target.value)} />
         </div>
-
-
+           <button
+            className="ajuste-btn-guardar"
+            onClick={() => {
+              if (!doctorSeleccionado) {
+                alert("Seleccione un doctor primero.");
+                return;
+              }
+              guardarCambiosDoctor({
+                id: doctorSeleccionado.id,
+                nombre,
+                apellido,
+                cedula,
+                telefono,
+              });
+            }}
+          >
+            Guardar Cambios
+          </button>
         </div>
     </div>
 
