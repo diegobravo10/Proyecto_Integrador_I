@@ -128,12 +128,6 @@ const handleGuardar = async () => {
                 <label>Correo electrónico:</label>
                 <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)}/>
             </div>
-
-            <div className="ajuste-form-right">
-                <button className="ajuste-btn-guardar" onClick={handleGuardar}>
-                Guardar Cambios
-                </button>
-            </div>
         </div>
         <div className="ajuste-form-group">
             <label>Nombres:</label>
@@ -160,6 +154,11 @@ const handleGuardar = async () => {
         <div className="ajuste-form-group">
             <label>Fecha de Nacimiento:</label>
             <input type="date" value={fechaNacimiento} onChange={(e) => setFechaNacimiento(e.target.value)} />
+        </div>
+        <div className="ajuste-form-right">
+                <button className="ajuste-btn-guardar" onClick={handleGuardar}>
+                Guardar Cambios
+                </button>
         </div>
         </div>
     </div>

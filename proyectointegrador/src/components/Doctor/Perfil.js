@@ -196,12 +196,6 @@ const agregarEspecialidad = async () => {
                 <label>Correo electrónico:</label>
                 <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)}/>
             </div>
-
-            <div className="ajuste-form-right">
-                <button className="ajuste-btn-guardar" onClick={handleGuardar}>
-                Guardar Cambios
-                </button>
-            </div>
         </div>
         <div className="ajuste-form-group">
             <label>Nombres:</label>
@@ -232,6 +226,9 @@ const agregarEspecialidad = async () => {
             <label>Fecha de Nacimiento:</label>
             <input type="date" value={fechaNacimiento} onChange={(e) => setFechaNacimiento(e.target.value)} />
         </div>
+        <button className="ajuste-btn-guardar" onClick={handleGuardar}>
+        Guardar Cambios
+      </button>
         </div>
     </div>
 

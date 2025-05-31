@@ -1,127 +1,114 @@
-import { useState, useEffect } from "react";
-import { auth, db } from "../servicios/firebase.js";
-import { doc, getDoc, updateDoc, Timestamp } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { db } from "../servicios/firebase";
+import { Timestamp } from "firebase/firestore";
+import './Ajuste.css';
 
 const Perfil = () => {
-  const [formData, setFormData] = useState({
-    nombre: "",
-    apellido: "",
-    cedula: "",
-    direccion: "",
-    telefono: "",
-    fechaNacimiento: "",
-    correo: "",
-  });
-
-  const [loading, setLoading] = useState(true);
+  const [docId, setDocId] = useState("");
+  const [correo, setCorreo] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
+  const [cedula, setCedula] = useState("");
+  const [direccion, setDireccion] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [fechaNacimiento, setFechaNacimiento] = useState("");
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      const currentUser = auth.currentUser;
-      if (!currentUser) {
-        alert("No hay usuario autenticado.");
-        window.location.href = "/";
-        return;
-      }
+    const storedId = localStorage.getItem("uid");
+    if (storedId) {
+      setDocId(storedId);
+      const cargarDatos = async () => {
+        try {
+          const userRef = doc(db, "users", storedId);
+          const docSnap = await getDoc(userRef);
 
-      try {
-        const userDoc = await getDoc(doc(db, "users", currentUser.uid));
-        if (userDoc.exists()) {
-          const data = userDoc.data();
-          setFormData({
-            nombre: data.nombre || "",
-            apellido: data.apellido || "",
-            cedula: data.cedula || "",
-            direccion: data.direccion || "",
-            telefono: data.telefono || "",
-            fechaNacimiento: data.fechaNacimiento
-              ? data.fechaNacimiento.toDate().toISOString().split("T")[0]
-              : "",
-            correo: data.correo || currentUser.email,
-          });
-        } else {
-          alert("No se encontraron datos del usuario.");
+          if (docSnap.exists()) {
+            const datos = docSnap.data();
+            setCorreo(datos.correo || "");
+            setNombre(datos.nombre || "");
+            setApellido(datos.apellido || "");
+            setCedula(datos.cedula || "");
+            setDireccion(datos.direccion || "");
+            setTelefono(datos.telefono || "");
+
+            if (datos.fechaNacimiento && datos.fechaNacimiento.toDate) {
+              const fecha = datos.fechaNacimiento.toDate();
+              const yyyy = fecha.getFullYear();
+              const mm = String(fecha.getMonth() + 1).padStart(2, '0');
+              const dd = String(fecha.getDate()).padStart(2, '0');
+              setFechaNacimiento(`${yyyy}-${mm}-${dd}`);
+            }
+          } else {
+            console.warn("No se encontró el usuario");
+          }
+        } catch (error) {
+          console.error("Error al obtener datos:", error);
         }
-      } catch (error) {
-        console.error("Error al obtener datos:", error);
-        alert("Error al obtener los datos del usuario.");
-      } finally {
-        setLoading(false);
-      }
-    };
+      };
 
-    fetchUserData();
+      cargarDatos();
+    }
   }, []);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSave = async (e) => {
-    e.preventDefault();
-    const currentUser = auth.currentUser;
-    if (!currentUser) {
-      alert("No hay usuario autenticado.");
-      return;
-    }
+  const handleGuardar = async () => {
+    if (!docId) return;
 
     try {
-      const fechaComoTimestamp = formData.fechaNacimiento
-        ? Timestamp.fromDate(new Date(formData.fechaNacimiento + "T12:00:00"))
+      const fechaComoTimestamp = fechaNacimiento
+        ? Timestamp.fromDate(new Date(fechaNacimiento + "T12:00:00"))
         : null;
 
-      await updateDoc(doc(db, "users", currentUser.uid), {
-        nombre: formData.nombre,
-        apellido: formData.apellido,
-        cedula: formData.cedula,
-        direccion: formData.direccion,
-        telefono: formData.telefono,
+      await updateDoc(doc(db, "users", docId), {
+        nombre,
+        apellido,
+        cedula,
+        direccion,
+        telefono,
         fechaNacimiento: fechaComoTimestamp,
       });
 
       alert("Datos actualizados correctamente.");
     } catch (error) {
-      console.error("Error al actualizar:", error);
+      console.error("Error al actualizar datos:", error);
       alert("Error al guardar los cambios.");
     }
   };
 
-  if (loading) return <p>Cargando datos...</p>;
-
   return (
-    <div className="perfil-container">
-      <h2>Mi Perfil</h2>
-      <form onSubmit={handleSave} className="perfil-form">
-        <div>
-          <label>Correo electrónico:</label>
-          <input type="email" value={formData.correo} disabled />
-        </div>
-        <div>
-          <label>Nombres:</label>
-          <input type="text" name="nombre" value={formData.nombre} onChange={handleChange} />
-        </div>
-        <div>
-          <label>Apellidos:</label>
-          <input type="text" name="apellido" value={formData.apellido} onChange={handleChange} />
-        </div>
-        <div>
-          <label>Cédula:</label>
-          <input type="text" name="cedula" value={formData.cedula} onChange={handleChange} />
-        </div>
-        <div>
-          <label>Dirección:</label>
-          <input type="text" name="direccion" value={formData.direccion} onChange={handleChange} />
-        </div>
-        <div>
-          <label>Teléfono:</label>
-          <input type="text" name="telefono" value={formData.telefono} onChange={handleChange} />
-        </div>
-        <div>
-          <label>Fecha de Nacimiento:</label>
-          <input type="date" name="fechaNacimiento" value={formData.fechaNacimiento} onChange={handleChange} />
-        </div>
-        <button type="submit">Guardar cambios</button>
-      </form>
+    <div className="ajuste-container">
+      <h2>Perfil del Paciente</h2>
+      <div className="ajuste-form-group">
+        <label>Correo electrónico:</label>
+        <input type="email" value={correo} disabled />
+      </div>
+      <div className="ajuste-form-group">
+        <label>Nombres:</label>
+        <input type="text" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+      </div>
+      <div className="ajuste-form-group">
+        <label>Apellidos:</label>
+        <input type="text" value={apellido} onChange={(e) => setApellido(e.target.value)} />
+      </div>
+      <div className="ajuste-form-group">
+        <label>Cédula:</label>
+        <input type="text" value={cedula} onChange={(e) => setCedula(e.target.value)} />
+      </div>
+      <div className="ajuste-form-group">
+        <label>Dirección:</label>
+        <input type="text" value={direccion} onChange={(e) => setDireccion(e.target.value)} />
+      </div>
+      <div className="ajuste-form-group">
+        <label>Teléfono:</label>
+        <input type="text" value={telefono} onChange={(e) => setTelefono(e.target.value)} />
+      </div>
+      <div className="ajuste-form-group">
+        <label>Fecha de nacimiento:</label>
+        <input type="date" value={fechaNacimiento} onChange={(e) => setFechaNacimiento(e.target.value)} />
+      </div>
+      <button className="ajuste-btn-guardar" onClick={handleGuardar}>
+        Guardar Cambios
+      </button>
     </div>
   );
 };
