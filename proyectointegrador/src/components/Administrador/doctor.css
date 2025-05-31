@@ -107,4 +107,29 @@ label {
     font-size: 25px;
   }
 
+   .parrafoMai{
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgb(120, 161, 218);
+  }
+
+/* Asegúrate de que toda la tabla esté alineada */
+
+
+/* Badge para confirmado */
+.texto-confirmado {
+  color: #00ab2b; 
+  font-weight: bold;       /* Alinea con el texto normal */
+}
+
+/* Badge para rechazado */
+.texto-rechazado {
+  color: #ff0000;
+  font-weight: bold;
+}
+
+
+
 

@@ -369,7 +369,7 @@ const Admin = () => {
       <h1>Hola {nombre.split(" ")[0]} {apellido.split(" ")[0]} </h1>
       
       <div className="inicioescoger">
-        <label>Filtrar por Especialidad:</label>
+        <label>Especialidad:</label>
         <select
           value={especialidadSeleccionada}
           onChange={e => {
@@ -383,7 +383,7 @@ const Admin = () => {
           ))}
         </select>
 
-        <label>Filtrar por Doctor:</label>
+        <label>Doctor:</label>
         <select
           value={doctorSeleccionado}
           onChange={e => setDoctorSeleccionado(e.target.value)}
@@ -393,7 +393,12 @@ const Admin = () => {
             <option key={d.id} value={d.id}>{d.nombre} {d.apellido}</option>
           ))}
         </select>
+        
       </div>
+      <div className="parrafoMai">
+        Por favor, seleccionar primero la especialidad y luego el doctor
+      </div>
+      
       
       <h2>Citas Médicas {especialidadSeleccionada || doctorSeleccionado ? '(Filtradas)' : '(Todas)'}</h2>
       <table>
@@ -455,7 +460,10 @@ const Admin = () => {
                       cita.descripcion
                     )}
                   </td>
-                  <td>{cita.estado}</td>
+                  <td className={cita.estado === "confirmado" ? "texto-confirmado" : cita.estado === "rechazado" ? "texto-rechazado" : ""}>
+                      {cita.estado}
+                    </td>
+
                   <td>
                     {editandoCitaId === cita.id ? (
                       <>
