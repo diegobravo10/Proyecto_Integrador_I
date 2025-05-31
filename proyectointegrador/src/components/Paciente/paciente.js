@@ -108,10 +108,14 @@ const Paciente = () => {
         </div>
 
         <div className="ajuste-form-group text-center">
-          <button type="submit" className="ajuste-btn-guardar">
-            Agendar
-          </button>
+          <div style={{ display: 'inline-block' }}>
+            <button type="submit" className="ajuste-btn-guardar">
+              Agendar
+            </button>
+          </div>
         </div>
+
+
       </form>
 
       {availableTimes.length > 0 && (
