@@ -6,20 +6,17 @@ import './doctor.css'
 
 const Admin = () => {
   const [especialidades, setEspecialidades] = useState([]);
-  const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState("");
-
-  const [doctores, setDoctores] = useState([]);
-  const [doctorSeleccionado, setDoctorSeleccionado] = useState("");
-
   const [citas, setCitas] = useState([]);
 
-  // Datos relacionados para mostrar nombres y horarios
+  // Datos relacionados para mostrar nombres, especialidades y horarios
   const [pacientesMap, setPacientesMap] = useState({});
   const [horariosMap, setHorariosMap] = useState({});
+  const [doctoresMap, setDoctoresMap] = useState({});
+  const [especialidadesMap, setEspecialidadesMap] = useState({});
 
   const [editandoCitaId, setEditandoCitaId] = useState(null);
   const [descripcionEdit, setDescripcionEdit] = useState("");
-  const [fechaHoraEdit, setFechaHoraEdit] = useState(""); // Cambiado a fechaHoraEdit para datetime-local
+  const [fechaHoraEdit, setFechaHoraEdit] = useState("");
 
   // Estados para validaciones
   const [cargandoValidacion, setCargandoValidacion] = useState(false);
@@ -29,12 +26,9 @@ const Admin = () => {
   const [apellido, setApellido] = useState("");
   const [docId, setDocId] = useState("");
 
-  const [pacientes, setPacientes] = useState([]);
-  const [pacienteSeleccionado, setPacienteSeleccionado] = useState("");
-  const [descripcionNuevaCita, setDescripcionNuevaCita] = useState("");
-  const [fechaNuevaCita, setFechaNuevaCita] = useState(""); // Para el input datetime-local
-  const [mensajeNuevo, setMensajeNuevo] = useState("");
-  const [busquedaCedula, setBusquedaCedula] = useState("");
+  const [doctores, setDoctores] = useState([]);
+  const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState("");
+  const [doctorSeleccionado, setDoctorSeleccionado] = useState("");
 
   // Cargar datos del usuario logeado
   useEffect(() => {
@@ -67,7 +61,7 @@ const Admin = () => {
 
     if (typeof timestamp === 'string') {
       const date = new Date(timestamp);
-      if (isNaN(date.getTime())) return ""; // Check for invalid date string
+      if (isNaN(date.getTime())) return "";
       return date.toLocaleString('es-ES', {
         day: '2-digit',
         month: '2-digit',
@@ -126,86 +120,112 @@ const Admin = () => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
+  // Cargar todas las especialidades
+  useEffect(() => {
+    const cargarEspecialidades = async () => {
+      const snapshot = await getDocs(collection(db, "especialidad"));
+      const especialidadesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setEspecialidades(especialidadesData);
+      
+      // Crear mapa de especialidades para búsqueda rápida
+      const especialidadesMap = {};
+      especialidadesData.forEach(esp => {
+        especialidadesMap[esp.id] = esp;
+      });
+      setEspecialidadesMap(especialidadesMap);
+    };
+    cargarEspecialidades();
+  }, []);
+
+  // Cargar todos los doctores
+  useEffect(() => {
+    const cargarDoctores = async () => {
+      const q = query(collection(db, "users"), where("rol", "==", "doctor"));
+      const snapshot = await getDocs(q);
+      const doctoresData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setDoctores(doctoresData);
+    };
+    cargarDoctores();
+  }, []);
+
   // Cargar pacientes (rol: pacient)
   useEffect(() => {
     const cargarPacientes = async () => {
       const q = query(collection(db, "users"), where("rol", "==", "pacient"));
       const snapshot = await getDocs(q);
-      setPacientes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      const pacientesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      
+      // Crear mapa de pacientes para búsqueda rápida
+      const pacientesMap = {};
+      pacientesData.forEach(paciente => {
+        pacientesMap[paciente.id] = paciente;
+      });
+      setPacientesMap(pacientesMap);
     };
     cargarPacientes();
   }, []);
 
-  // 1. Cargar especialidades
+  // Cargar todas las citas con sus datos relacionados
   useEffect(() => {
-    const cargarEspecialidades = async () => {
-      const snapshot = await getDocs(collection(db, "especialidad"));
-      setEspecialidades(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    const cargarTodasLasCitas = async () => {
+      try {
+        // Cargar todas las citas
+        const citasSnapshot = await getDocs(collection(db, "citasmedicas"));
+        const citasData = citasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setCitas(citasData);
+
+        // Extraer ids únicos
+        const pacienteIds = [...new Set(citasData.map(c => c.pacienteid))];
+        const horarioIds = [...new Set(citasData.map(c => c.horarioid))];
+        const doctorIds = [...new Set(citasData.map(c => c.doctorid))];
+
+        // Cargar pacientes (optimizado - solo los necesarios)
+        if (pacienteIds.length > 0) {
+          const pacientesPromises = pacienteIds.map(id => getDoc(doc(db, "users", id)));
+          const pacientesDocs = await Promise.all(pacientesPromises);
+          const pacientesMapTemp = {};
+          pacientesDocs.forEach(docSnap => {
+            if (docSnap.exists()) {
+              pacientesMapTemp[docSnap.id] = docSnap.data();
+            }
+          });
+          // Combinar con pacientes ya cargados
+          setPacientesMap(prev => ({ ...prev, ...pacientesMapTemp }));
+        }
+
+        // Cargar horarios
+        if (horarioIds.length > 0) {
+          const horariosPromises = horarioIds.map(id => getDoc(doc(db, "horarios", id)));
+          const horariosDocs = await Promise.all(horariosPromises);
+          const horariosMap = {};
+          horariosDocs.forEach(docSnap => {
+            if (docSnap.exists()) {
+              horariosMap[docSnap.id] = docSnap.data();
+            }
+          });
+          setHorariosMap(horariosMap);
+        }
+
+        // Cargar doctores
+        if (doctorIds.length > 0) {
+          const doctoresPromises = doctorIds.map(id => getDoc(doc(db, "users", id)));
+          const doctoresDocs = await Promise.all(doctoresPromises);
+          const doctoresMap = {};
+          doctoresDocs.forEach(docSnap => {
+            if (docSnap.exists()) {
+              doctoresMap[docSnap.id] = docSnap.data();
+            }
+          });
+          setDoctoresMap(doctoresMap);
+        }
+
+      } catch (error) {
+        console.error("Error al cargar las citas:", error);
+      }
     };
-    cargarEspecialidades();
+
+    cargarTodasLasCitas();
   }, []);
-
-  // 2. Cuando cambia especialidad, cargar doctores
-  useEffect(() => {
-    if (!especialidadSeleccionada) {
-      setDoctores([]);
-      setDoctorSeleccionado("");
-      return;
-    }
-    const cargarDoctores = async () => {
-      const q = query(collection(db, "users"), where("especialidadid", "==", especialidadSeleccionada));
-      const snapshot = await getDocs(q);
-      setDoctores(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-      setDoctorSeleccionado("");
-      setCitas([]);
-      setPacientesMap({});
-      setHorariosMap({});
-    };
-    cargarDoctores();
-  }, [especialidadSeleccionada]);
-
-  // 3. Cuando cambia doctor, cargar citas + datos pacientes y horarios
-  useEffect(() => {
-    if (!doctorSeleccionado) {
-      setCitas([]);
-      setPacientesMap({});
-      setHorariosMap({});
-      return;
-    }
-    const cargarCitasConDatos = async () => {
-      const q = query(collection(db, "citasmedicas"), where("doctorid", "==", doctorSeleccionado));
-      const snapshot = await getDocs(q);
-      const citasData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setCitas(citasData);
-
-      // Extraer ids únicos pacientes y horarios
-      const pacienteIds = [...new Set(citasData.map(c => c.pacienteid))];
-      const horarioIds = [...new Set(citasData.map(c => c.horarioid))];
-
-      // Cargar pacientes
-      const pacientesPromises = pacienteIds.map(id => getDoc(doc(db, "users", id)));
-      const pacientesDocs = await Promise.all(pacientesPromises);
-      const pacientes = {};
-      pacientesDocs.forEach(docSnap => {
-        if (docSnap.exists()) {
-          pacientes[docSnap.id] = docSnap.data();
-        }
-      });
-      setPacientesMap(pacientes);
-
-      // Cargar horarios
-      const horariosPromises = horarioIds.map(id => getDoc(doc(db, "horarios", id)));
-      const horariosDocs = await Promise.all(horariosPromises);
-      const horarios = {};
-      horariosDocs.forEach(docSnap => {
-        if (docSnap.exists()) {
-          horarios[docSnap.id] = docSnap.data();
-        }
-      });
-      setHorariosMap(horarios);
-    };
-    cargarCitasConDatos();
-  }, [doctorSeleccionado]);
 
   // Actualizar estado de cita
   const actualizarEstadoCita = async (idCita, nuevoEstado) => {
@@ -214,19 +234,17 @@ const Admin = () => {
     setCitas(citas.map(c => c.id === idCita ? { ...c, estado: nuevoEstado } : c));
   };
 
-  // Validar disponibilidad de horario (ahora con fecha y hora)
+  // Validar disponibilidad de horario
   const validarDisponibilidadHorario = async (doctorId, nuevaFechaHora, horarioIdAExcluir = null) => {
     try {
       setCargandoValidacion(true);
       setErrorValidacion("");
 
-      // Convertir la nuevaFechaHora a un objeto Date para comparación
       const fechaHoraObjetivo = new Date(nuevaFechaHora);
       if (isNaN(fechaHoraObjetivo.getTime())) {
         return { disponible: false, mensaje: "Formato de fecha y hora inválido." };
       }
 
-      // Validar que la fecha no sea en el pasado
       if (fechaHoraObjetivo < new Date()) {
         return { disponible: false, mensaje: "La fecha y hora de la cita no pueden ser en el pasado." };
       }
@@ -234,14 +252,12 @@ const Admin = () => {
       const horariosQuery = query(
         collection(db, "horarios"),
         where("doctorid", "==", doctorId),
-        where("fecha", "==", fechaHoraObjetivo) // Busca horarios con la misma fecha y hora
+        where("fecha", "==", fechaHoraObjetivo)
       );
 
       const horariosSnapshot = await getDocs(horariosQuery);
 
-      // Si encuentra horarios en esa fecha y hora
       if (!horariosSnapshot.empty) {
-        // Verificar si alguno está ocupado (excluyendo el horario actual si estamos editando)
         const horariosOcupados = horariosSnapshot.docs.filter(docSnap => {
           const horario = docSnap.data();
           return docSnap.id !== horarioIdAExcluir && horario.estado === "ocupado";
@@ -268,17 +284,15 @@ const Admin = () => {
       const citaActual = citas.find(c => c.id === idCita);
       const horarioActual = horariosMap[citaActual.horarioid];
 
-      // Convertir la fechaHoraEdit a un objeto Date para validación
       const nuevaFechaHoraObj = new Date(fechaHoraEdit);
       if (isNaN(nuevaFechaHoraObj.getTime())) {
         setErrorValidacion("Formato de fecha y hora inválido.");
         return;
       }
 
-      // Si la fecha y/o hora cambió, validar disponibilidad
       if (fechaHoraEdit && timestampToDateTimeInput(horarioActual?.fecha) !== fechaHoraEdit) {
         const validacion = await validarDisponibilidadHorario(
-          doctorSeleccionado,
+          citaActual.doctorid,
           fechaHoraEdit,
           citaActual.horarioid
         );
@@ -288,27 +302,23 @@ const Admin = () => {
           return;
         }
 
-        // Actualizar la fecha y hora en la colección de horarios
         const horarioRef = doc(db, "horarios", citaActual.horarioid);
-        await updateDoc(horarioRef, { fecha: nuevaFechaHoraObj }); // Guarda como Timestamp
+        await updateDoc(horarioRef, { fecha: nuevaFechaHoraObj });
       }
 
-      // Actualizar la cita médica (descripción)
       const citaRef = doc(db, "citasmedicas", idCita);
       await updateDoc(citaRef, { descripcion: descripcionEdit });
 
-      // Actualizar estado local de horarios (si la fecha/hora cambió)
       if (fechaHoraEdit && timestampToDateTimeInput(horarioActual?.fecha) !== fechaHoraEdit) {
         setHorariosMap(prev => ({
           ...prev,
           [citaActual.horarioid]: {
             ...prev[citaActual.horarioid],
-            fecha: nuevaFechaHoraObj // Actualiza el estado local con el objeto Date
+            fecha: nuevaFechaHoraObj
           }
         }));
       }
 
-      // Actualizar estado local de citas (descripción)
       setCitas(citas.map(c => c.id === idCita ? {
         ...c,
         descripcion: descripcionEdit
@@ -323,119 +333,75 @@ const Admin = () => {
   };
 
   const buscarPacientePorCedula = async () => {
-    try {
-      const q = query(collection(db, "users"), where("cedula", "==", busquedaCedula));
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        const pacienteDoc = snapshot.docs[0];
-        setPacienteSeleccionado(pacienteDoc.id);
-        setMensajeNuevo(`Paciente encontrado: ${pacienteDoc.data().nombre} ${pacienteDoc.data().apellido}`);
-      } else {
-        setPacienteSeleccionado("");
-        setMensajeNuevo("No se encontró paciente con esa cédula.");
-      }
-    } catch (error) {
-      console.error("Error al buscar paciente:", error);
-      setMensajeNuevo("Error en la búsqueda.");
-    }
+    // Esta función ya no es necesaria, pero la mantenemos por si acaso
+    console.log("Función de búsqueda de paciente no utilizada en esta vista");
   };
 
   const registrarCita = async () => {
-    if (!especialidadSeleccionada || !doctorSeleccionado || !pacienteSeleccionado || !fechaNuevaCita || !descripcionNuevaCita) {
-      setMensajeNuevo("Completa todos los campos (especialidad, doctor, paciente, fecha y hora, descripción).");
-      return;
-    }
-
-    try {
-      setMensajeNuevo("");
-      setCargandoValidacion(true);
-
-      const nuevaFechaHora = new Date(fechaNuevaCita);
-
-      // Validar la disponibilidad del horario antes de crear la cita
-      const validacion = await validarDisponibilidadHorario(
-        doctorSeleccionado,
-        nuevaFechaHora
-      );
-
-      if (!validacion.disponible) {
-        setMensajeNuevo(validacion.mensaje);
-        setCargandoValidacion(false);
-        return;
-      }
-
-      // Crear un nuevo horario
-      const nuevoHorario = {
-        doctorid: doctorSeleccionado,
-        fecha: nuevaFechaHora, // Guardar como Timestamp de Firebase
-        estado: "ocupado"
-      };
-      const horarioRef = await addDoc(collection(db, "horarios"), nuevoHorario);
-
-      // Crear cita
-      const nuevaCita = {
-        doctorid: doctorSeleccionado,
-        pacienteid: pacienteSeleccionado,
-        horarioid: horarioRef.id,
-        descripcion: descripcionNuevaCita,
-        estado: "pendiente"
-      };
-      await addDoc(collection(db, "citasmedicas"), nuevaCita);
-      setMensajeNuevo("Cita registrada correctamente.");
-
-      // Limpia los campos y recarga las citas para el doctor seleccionado
-      setDescripcionNuevaCita("");
-      setFechaNuevaCita("");
-      setBusquedaCedula("");
-      setPacienteSeleccionado("");
-      // Recargar citas para que la nueva aparezca en la tabla
-      // Un efecto secundario del cambio de doctorSeleccionado o un re-fetch explícito.
-      // Para simplificar, podemos resetear doctorSeleccionado para que el useEffect lo recargue.
-      // O llamar directamente a la función que carga las citas para el doctor.
-      // Para esta solución, asumiremos que volver a seleccionar el doctor activará la recarga.
-      setDoctorSeleccionado(doctorSeleccionado); 
-    } catch (error) {
-      console.error("Error al registrar cita:", error);
-      setMensajeNuevo("Error al registrar cita. Inténtalo de nuevo.");
-    } finally {
-      setCargandoValidacion(false);
-    }
+    // Esta función ya no es necesaria, pero la mantenemos por si acaso
+    console.log("Función de registro de cita no utilizada en esta vista");
   };
+
+  // Filtrar doctores por especialidad seleccionada
+  const doctoresFiltrados = especialidadSeleccionada 
+    ? doctores.filter(d => d.especialidadid === especialidadSeleccionada)
+    : doctores;
+
+  // Filtrar citas según los selects
+  const citasFiltradas = citas.filter(cita => {
+    const doctor = doctoresMap[cita.doctorid];
+    
+    // Filtro por especialidad
+    if (especialidadSeleccionada && doctor?.especialidadid !== especialidadSeleccionada) {
+      return false;
+    }
+    
+    // Filtro por doctor
+    if (doctorSeleccionado && cita.doctorid !== doctorSeleccionado) {
+      return false;
+    }
+    
+    return true;
+  });
 
   return (
     <div>
       <h1>Hola {nombre.split(" ")[0]} {apellido.split(" ")[0]} </h1>
+      
       <div className="inicioescoger">
-      <label>Especialidad:</label>
-      <select
-        value={especialidadSeleccionada}
-        onChange={e => setEspecialidadSeleccionada(e.target.value)}
-      >
-        <option value="">-- Seleccione especialidad --</option>
-        {especialidades.map(e => (
-          <option key={e.id} value={e.id}>{e.nombre}</option>
-        ))}
-      </select>
+        <label>Filtrar por Especialidad:</label>
+        <select
+          value={especialidadSeleccionada}
+          onChange={e => {
+            setEspecialidadSeleccionada(e.target.value);
+            setDoctorSeleccionado(""); // Reset doctor selection when specialty changes
+          }}
+        >
+          <option value="">-- Todas las especialidades --</option>
+          {especialidades.map(e => (
+            <option key={e.id} value={e.id}>{e.nombre}</option>
+          ))}
+        </select>
 
-      <label>Doctor:</label>
-      <select
-        value={doctorSeleccionado}
-        onChange={e => setDoctorSeleccionado(e.target.value)}
-        disabled={!especialidadSeleccionada}
-      >
-        <option value="">-- Seleccione doctor --</option>
-        {doctores.map(d => (
-          <option key={d.id} value={d.id}>{d.nombre} {d.apellido}</option>
-        ))}
-      </select>
-        </div>
-      <hr/>
-
-      <h2>Citas del Doctor</h2>
+        <label>Filtrar por Doctor:</label>
+        <select
+          value={doctorSeleccionado}
+          onChange={e => setDoctorSeleccionado(e.target.value)}
+        >
+          <option value="">-- Todos los doctores --</option>
+          {doctoresFiltrados.map(d => (
+            <option key={d.id} value={d.id}>{d.nombre} {d.apellido}</option>
+          ))}
+        </select>
+      </div>
+      
+      <h2>Citas Médicas {especialidadSeleccionada || doctorSeleccionado ? '(Filtradas)' : '(Todas)'}</h2>
       <table>
         <thead>
           <tr>
             <th>Paciente</th>
+            <th>Doctor</th>
+            <th>Especialidad</th>
             <th>Fecha y Hora</th>
             <th>Descripción</th>
             <th>Estado</th>
@@ -443,14 +409,18 @@ const Admin = () => {
           </tr>
         </thead>
         <tbody>
-          {citas.length > 0 ? (
-            citas.map(cita => {
+          {citasFiltradas.length > 0 ? (
+            citasFiltradas.map(cita => {
               const paciente = pacientesMap[cita.pacienteid];
+              const doctor = doctoresMap[cita.doctorid];
+              const especialidad = doctor ? especialidadesMap[doctor.especialidadid] : null;
               const horario = horariosMap[cita.horarioid];
 
               return (
                 <tr key={cita.id}>
                   <td>{paciente ? `${paciente.nombre} ${paciente.apellido}` : cita.pacienteid}</td>
+                  <td>{doctor ? `${doctor.nombre} ${doctor.apellido}` : cita.doctorid}</td>
+                  <td>{especialidad ? especialidad.nombre : "Sin especialidad"}</td>
                   <td>
                     {editandoCitaId === cita.id ? (
                       <div>
@@ -459,7 +429,7 @@ const Admin = () => {
                           value={fechaHoraEdit}
                           onChange={e => {
                             setFechaHoraEdit(e.target.value);
-                            setErrorValidacion(""); // Limpiar error al cambiar fecha
+                            setErrorValidacion("");
                           }}
                         />
                         {errorValidacion && (
@@ -524,54 +494,11 @@ const Admin = () => {
             })
           ) : (
             <tr>
-              <td colSpan="5">No hay citas para el doctor seleccionado.</td>
+              <td colSpan="7">No hay citas {especialidadSeleccionada || doctorSeleccionado ? 'que coincidan con los filtros seleccionados' : 'registradas'}.</td>
             </tr>
           )}
         </tbody>
       </table>
-
-      <hr/>
-
-     {/*  <div className="form-container1">
-        <h2>Agregar Nueva Cita</h2>
-        <p>Por favor seleccionar el doctor antes de agregar una cita.</p>
-
-        <label>Cédula del paciente:</label>
-        <div className="input-group">
-          <input
-            className="inputcedula"
-            type="text"
-            value={busquedaCedula}
-            onChange={e => setBusquedaCedula(e.target.value)}
-            placeholder="Ingrese cédula"
-          />
-          <button onClick={buscarPacientePorCedula}>Buscar</button>
-        </div>
-        {pacienteSeleccionado && <p style={{ color: 'green' }}>Paciente seleccionado: {pacientes.find(p => p.id === pacienteSeleccionado)?.nombre} {pacientes.find(p => p.id === pacienteSeleccionado)?.apellido}</p>}
-
-        <label>Fecha y Hora:</label>
-        <input
-          
-          type="datetime-local"
-          value={fechaNuevaCita}
-          onChange={(e) => setFechaNuevaCita(e.target.value)}
-        />
-
-        <label>Descripción:</label>
-        <input
-        className="inputdes"
-          type="text"
-          value={descripcionNuevaCita}
-          onChange={e => setDescripcionNuevaCita(e.target.value)}
-          placeholder="Motivo de la cita"
-        />
-
-        <button className="btn-registrar" onClick={registrarCita} disabled={cargandoValidacion}>
-          {cargandoValidacion ? "Registrando..." : "Registrar Cita"}
-        </button>
-
-        {mensajeNuevo && <p className="mensaje" style={{ color: mensajeNuevo.includes("correctamente") ? 'green' : 'red' }}>{mensajeNuevo}</p>}
-      </div>*/}
     </div>
   );
 };
