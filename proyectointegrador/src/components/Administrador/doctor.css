@@ -96,5 +96,15 @@ label {
     max-width: 300px;
     
   }
+  .inicioescoger{
+    gap: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+   .inicioescoger label{
+    font-size: 25px;
+  }
 
 

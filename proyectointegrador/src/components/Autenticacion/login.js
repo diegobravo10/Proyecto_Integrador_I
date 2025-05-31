@@ -64,7 +64,8 @@ const Login = () => {
       <div className="right-side">
         <h1>Citas Medicas</h1>
           <p className="parrafo">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor.
+          ¡Agenda tu consulta médica en línea hoy mismo!
+          Facilitamos la gestión de tus citas con un sistema rápido, seguro y disponible las 24 horas.
           </p>
         <button className="principal" onClick={handleLogin}>Ingresar</button>
       </div>

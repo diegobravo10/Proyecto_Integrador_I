@@ -315,7 +315,6 @@ const Admin = () => {
       } : c));
 
       setEditandoCitaId(null);
-      alert("Cita actualizada correctamente");
 
     } catch (error) {
       console.error("Error al guardar edición:", error);
@@ -406,7 +405,7 @@ const Admin = () => {
   return (
     <div>
       <h1>Hola {nombre.split(" ")[0]} {apellido.split(" ")[0]} </h1>
-
+      <div className="inicioescoger">
       <label>Especialidad:</label>
       <select
         value={especialidadSeleccionada}
@@ -429,7 +428,7 @@ const Admin = () => {
           <option key={d.id} value={d.id}>{d.nombre} {d.apellido}</option>
         ))}
       </select>
-
+        </div>
       <hr/>
 
       <h2>Citas del Doctor</h2>
@@ -533,7 +532,7 @@ const Admin = () => {
 
       <hr/>
 
-      <div className="form-container1">
+     {/*  <div className="form-container1">
         <h2>Agregar Nueva Cita</h2>
         <p>Por favor seleccionar el doctor antes de agregar una cita.</p>
 
@@ -572,7 +571,7 @@ const Admin = () => {
         </button>
 
         {mensajeNuevo && <p className="mensaje" style={{ color: mensajeNuevo.includes("correctamente") ? 'green' : 'red' }}>{mensajeNuevo}</p>}
-      </div>
+      </div>*/}
     </div>
   );
 };
