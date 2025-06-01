@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, query, where, updateDoc, doc, getDoc, addDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, updateDoc, doc, getDoc, addDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../servicios/firebase.js";
 
 import './doctor.css'
@@ -165,45 +165,48 @@ const Doctor = () => {
   }, [especialidadSeleccionada]);
 
   // 3. Cuando cambia doctor, cargar citas + datos pacientes y horarios
-useEffect(() => {
-  const storedId = localStorage.getItem("uid");
-  if (!storedId) return;
+  useEffect(() => {
+    const storedId = localStorage.getItem("uid");
+    if (!storedId) return;
 
-  const cargarCitasConDatos = async () => {
+    // Consulta para las citas del doctor logueado
     const q = query(collection(db, "citasmedicas"), where("doctorid", "==", storedId));
-    const snapshot = await getDocs(q);
-    const citasData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setCitas(citasData);
 
-    // Extraer ids únicos pacientes y horarios
-    const pacienteIds = [...new Set(citasData.map(c => c.pacienteid))];
-    const horarioIds = [...new Set(citasData.map(c => c.horarioid))];
+    // Suscripción en tiempo real
+    const unsubscribe = onSnapshot(q, async (snapshot) => {
+      const citasData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCitas(citasData);
 
-    // Cargar pacientes
-    const pacientesPromises = pacienteIds.map(id => getDoc(doc(db, "users", id)));
-    const pacientesDocs = await Promise.all(pacientesPromises);
-    const pacientes = {};
-    pacientesDocs.forEach(docSnap => {
-      if (docSnap.exists()) {
-        pacientes[docSnap.id] = docSnap.data();
-      }
+      // Extraer ids únicos pacientes y horarios
+      const pacienteIds = [...new Set(citasData.map(c => c.pacienteid))];
+      const horarioIds = [...new Set(citasData.map(c => c.horarioid))];
+
+      // Cargar pacientes
+      const pacientesPromises = pacienteIds.map(id => getDoc(doc(db, "users", id)));
+      const pacientesDocs = await Promise.all(pacientesPromises);
+      const pacientes = {};
+      pacientesDocs.forEach(docSnap => {
+        if (docSnap.exists()) {
+          pacientes[docSnap.id] = docSnap.data();
+        }
+      });
+      setPacientesMap(pacientes);
+
+      // Cargar horarios
+      const horariosPromises = horarioIds.map(id => getDoc(doc(db, "horarios", id)));
+      const horariosDocs = await Promise.all(horariosPromises);
+      const horarios = {};
+      horariosDocs.forEach(docSnap => {
+        if (docSnap.exists()) {
+          horarios[docSnap.id] = docSnap.data();
+        }
+      });
+      setHorariosMap(horarios);
     });
-    setPacientesMap(pacientes);
 
-    // Cargar horarios
-    const horariosPromises = horarioIds.map(id => getDoc(doc(db, "horarios", id)));
-    const horariosDocs = await Promise.all(horariosPromises);
-    const horarios = {};
-    horariosDocs.forEach(docSnap => {
-      if (docSnap.exists()) {
-        horarios[docSnap.id] = docSnap.data();
-      }
-    });
-    setHorariosMap(horarios);
-  };
-
-  cargarCitasConDatos();
-}, []);
+    // Limpia el listener al desmontar el componente
+    return () => unsubscribe();
+  }, []);
 
   // Actualizar estado de cita
   const actualizarEstadoCita = async (idCita, nuevoEstado) => {
@@ -261,73 +264,73 @@ useEffect(() => {
 
   // Guardar edición de cita
   const guardarEdicion = async (idCita) => {
-  try {
-    setErrorValidacion("");
-    const citaActual = citas.find(c => c.id === idCita);
-    const horarioActual = horariosMap[citaActual.horarioid];
+    try {
+      setErrorValidacion("");
+      const citaActual = citas.find(c => c.id === idCita);
+      const horarioActual = horariosMap[citaActual.horarioid];
 
-    // Verifica que el horario exista
-    const horarioRef = doc(db, "horarios", citaActual.horarioid);
-    const horarioSnap = await getDoc(horarioRef);
-    if (!horarioSnap.exists()) {
-      setErrorValidacion("El horario asociado a esta cita no existe.");
-      return;
-    }
-
-    // Convertir la fechaHoraEdit a un objeto Date para validación
-    const nuevaFechaHoraObj = new Date(fechaHoraEdit);
-    if (isNaN(nuevaFechaHoraObj.getTime())) {
-      setErrorValidacion("Formato de fecha y hora inválido.");
-      return;
-    }
-
-    // Si la fecha y/o hora cambió, validar disponibilidad
-    if (fechaHoraEdit && timestampToDateTimeInput(horarioActual?.fecha) !== fechaHoraEdit) {
-      const storedId = localStorage.getItem("uid");
-      const validacion = await validarDisponibilidadHorario(
-        storedId,
-        fechaHoraEdit,
-        citaActual.horarioid
-      );
-
-      if (!validacion.disponible) {
-        setErrorValidacion(validacion.mensaje);
+      // Verifica que el horario exista
+      const horarioRef = doc(db, "horarios", citaActual.horarioid);
+      const horarioSnap = await getDoc(horarioRef);
+      if (!horarioSnap.exists()) {
+        setErrorValidacion("El horario asociado a esta cita no existe.");
         return;
       }
 
-      // Actualizar la fecha y hora en la colección de horarios
-      await updateDoc(horarioRef, { fecha: nuevaFechaHoraObj });
-    }
+      // Convertir la fechaHoraEdit a un objeto Date para validación
+      const nuevaFechaHoraObj = new Date(fechaHoraEdit);
+      if (isNaN(nuevaFechaHoraObj.getTime())) {
+        setErrorValidacion("Formato de fecha y hora inválido.");
+        return;
+      }
 
-    // Actualizar la cita médica (descripción)
-    const citaRef = doc(db, "citasmedicas", idCita);
-    await updateDoc(citaRef, { descripcion: descripcionEdit });
+      // Si la fecha y/o hora cambió, validar disponibilidad
+      if (fechaHoraEdit && timestampToDateTimeInput(horarioActual?.fecha) !== fechaHoraEdit) {
+        const storedId = localStorage.getItem("uid");
+        const validacion = await validarDisponibilidadHorario(
+          storedId,
+          fechaHoraEdit,
+          citaActual.horarioid
+        );
 
-    // Actualizar estado local de horarios (si la fecha/hora cambió)
-    if (fechaHoraEdit && timestampToDateTimeInput(horarioActual?.fecha) !== fechaHoraEdit) {
-      setHorariosMap(prev => ({
-        ...prev,
-        [citaActual.horarioid]: {
-          ...prev[citaActual.horarioid],
-          fecha: nuevaFechaHoraObj
+        if (!validacion.disponible) {
+          setErrorValidacion(validacion.mensaje);
+          return;
         }
-      }));
+
+        // Actualizar la fecha y hora en la colección de horarios
+        await updateDoc(horarioRef, { fecha: nuevaFechaHoraObj });
+      }
+
+      // Actualizar la cita médica (descripción)
+      const citaRef = doc(db, "citasmedicas", idCita);
+      await updateDoc(citaRef, { descripcion: descripcionEdit });
+
+      // Actualizar estado local de horarios (si la fecha/hora cambió)
+      if (fechaHoraEdit && timestampToDateTimeInput(horarioActual?.fecha) !== fechaHoraEdit) {
+        setHorariosMap(prev => ({
+          ...prev,
+          [citaActual.horarioid]: {
+            ...prev[citaActual.horarioid],
+            fecha: nuevaFechaHoraObj
+          }
+        }));
+      }
+
+      // Actualizar estado local de citas (descripción)
+      setCitas(citas.map(c => c.id === idCita ? {
+        ...c,
+        descripcion: descripcionEdit
+      } : c));
+
+      setEditandoCitaId(null);
+      alert("Cita actualizada correctamente");
+
+    } catch (error) {
+      console.error("Error al guardar edición:", error);
+      setErrorValidacion("Error al actualizar la cita.");
     }
-
-    // Actualizar estado local de citas (descripción)
-    setCitas(citas.map(c => c.id === idCita ? {
-      ...c,
-      descripcion: descripcionEdit
-    } : c));
-
-    setEditandoCitaId(null);
-    alert("Cita actualizada correctamente");
-
-  } catch (error) {
-    console.error("Error al guardar edición:", error);
-    setErrorValidacion("Error al actualizar la cita.");
-  }
-};
+  };
 
   const buscarPacientePorCedula = async () => {
     try {
@@ -361,11 +364,11 @@ useEffect(() => {
 
       // Validar la disponibilidad del horario antes de crear la cita
       const storedId = localStorage.getItem("uid");
-        // ...
-        const validacion = await validarDisponibilidadHorario(
+      // ...
+      const validacion = await validarDisponibilidadHorario(
         storedId,
         nuevaFechaHora
-);
+      );
 
       if (!validacion.disponible) {
         setMensajeNuevo(validacion.mensaje);

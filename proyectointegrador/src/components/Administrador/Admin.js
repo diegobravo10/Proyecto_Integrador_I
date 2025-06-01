@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { collection, getDocs, query, where, updateDoc, doc, getDoc, addDoc } from "firebase/firestore";
+import { collection, getDocs, query, where, updateDoc, doc, getDoc, addDoc, onSnapshot } from "firebase/firestore";
 import { db } from "../servicios/firebase.js";
 
 import './doctor.css'
@@ -225,6 +225,61 @@ const Admin = () => {
     };
 
     cargarTodasLasCitas();
+  }, []);
+
+  // Suscripción en tiempo real a la colección de citas
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "citasmedicas"), async (citasSnapshot) => {
+      const citasData = citasSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setCitas(citasData);
+
+      // Extraer ids únicos
+      const pacienteIds = [...new Set(citasData.map(c => c.pacienteid))];
+      const horarioIds = [...new Set(citasData.map(c => c.horarioid))];
+      const doctorIds = [...new Set(citasData.map(c => c.doctorid))];
+
+      // Cargar pacientes (optimizado - solo los necesarios)
+      if (pacienteIds.length > 0) {
+        const pacientesPromises = pacienteIds.map(id => getDoc(doc(db, "users", id)));
+        const pacientesDocs = await Promise.all(pacientesPromises);
+        const pacientesMapTemp = {};
+        pacientesDocs.forEach(docSnap => {
+          if (docSnap.exists()) {
+            pacientesMapTemp[docSnap.id] = docSnap.data();
+          }
+        });
+        setPacientesMap(prev => ({ ...prev, ...pacientesMapTemp }));
+      }
+
+      // Cargar horarios
+      if (horarioIds.length > 0) {
+        const horariosPromises = horarioIds.map(id => getDoc(doc(db, "horarios", id)));
+        const horariosDocs = await Promise.all(horariosPromises);
+        const horariosMap = {};
+        horariosDocs.forEach(docSnap => {
+          if (docSnap.exists()) {
+            horariosMap[docSnap.id] = docSnap.data();
+          }
+        });
+        setHorariosMap(horariosMap);
+      }
+
+      // Cargar doctores
+      if (doctorIds.length > 0) {
+        const doctoresPromises = doctorIds.map(id => getDoc(doc(db, "users", id)));
+        const doctoresDocs = await Promise.all(doctoresPromises);
+        const doctoresMap = {};
+        doctoresDocs.forEach(docSnap => {
+          if (docSnap.exists()) {
+            doctoresMap[docSnap.id] = docSnap.data();
+          }
+        });
+        setDoctoresMap(doctoresMap);
+      }
+    });
+
+    // Limpia el listener al desmontar el componente
+    return () => unsubscribe();
   }, []);
 
   // Actualizar estado de cita
