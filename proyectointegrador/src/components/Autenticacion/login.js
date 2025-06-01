@@ -22,7 +22,6 @@ const Login = () => {
       if (!querySnapshot.empty) {
         // El usuario ya existe en Firestore
         const userData = querySnapshot.docs[0].data();
-        alert(`Bienvenido, ${userData.nombre}`);
 
         if (userData.rol === "doctor") {
           navigate("/doctor");
