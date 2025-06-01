@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import './paciente.css'; // Asegúrate de que aquí tengas los mismos estilos que en perfil
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../servicios/firebase";
+
 
 const Paciente = () => {
   const [specialties, setSpecialties] = useState([]);
@@ -13,19 +16,36 @@ const Paciente = () => {
     time: ''
   });
 
-  useEffect(() => {
-    setSpecialties([
-      { id: 'cardiologia', name: 'Cardiología' },
-      { id: 'dermatologia', name: 'Dermatología' }
-    ]);
-    setDoctors([
-      { id: 'doc1', name: 'Dr. Pérez', specialtyId: 'cardiologia' },
-      { id: 'doc2', name: 'Dra. Gómez', specialtyId: 'dermatologia' }
-    ]);
-  }, []);
+ useEffect(() => {
+  const fetchData = async () => {
+    try {
+      // Cargar especialidades
+      const specialtiesSnapshot = await getDocs(collection(db, "especialidad"));
+      const specialtiesList = specialtiesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      console.log("Especialidades:", specialtiesList);
+      setSpecialties(specialtiesList);
+
+      // Cargar doctores
+      const usersSnapshot = await getDocs(collection(db, "users"));
+      const doctorsList = usersSnapshot.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .filter(user => user.rol === 'doctor');
+      console.log("Doctores:", doctorsList);
+      setDoctors(doctorsList);
+
+    } catch (error) {
+      console.error("Error al obtener datos de Firebase:", error);
+    }
+  };
+
+  fetchData();
+}, []);
 
   useEffect(() => {
-    const filtered = doctors.filter(doc => doc.specialtyId === appointment.specialtyId);
+    const filtered = doctors.filter(doc => doc.especialidadid === appointment.specialtyId);
     setFilteredDoctors(filtered);
     setAppointment(prev => ({ ...prev, doctorId: '', time: '' }));
   }, [appointment.specialtyId, doctors]);
@@ -58,7 +78,7 @@ const Paciente = () => {
           >
             <option value="">Selecciona</option>
             {specialties.map(spec => (
-              <option key={spec.id} value={spec.id}>{spec.name}</option>
+              <option key={spec.id} value={spec.id}>{spec.nombre}</option>
             ))}
           </select>
         </div>
@@ -73,7 +93,7 @@ const Paciente = () => {
           >
             <option value="">Selecciona</option>
             {filteredDoctors.map(doc => (
-              <option key={doc.id} value={doc.id}>{doc.name}</option>
+              <option key={doc.id} value={doc.id}>{doc.nombre} {doc.apellido}</option>
             ))}
           </select>
         </div>
