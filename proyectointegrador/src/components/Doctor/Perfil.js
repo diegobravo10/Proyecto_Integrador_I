@@ -194,7 +194,7 @@ const agregarEspecialidad = async () => {
        <div className="ajuste-form-group-row">
             <div className="ajuste-form-left">
                 <label>Correo electrónico:</label>
-                <input type="email" value={correo} onChange={(e) => setCorreo(e.target.value)}/>
+                <input type="email" value={correo} disabled/>
             </div>
         </div>
         <div className="ajuste-form-group">

@@ -46,7 +46,6 @@ const Horario = () => {
         fecha,
         disponibilidad: true
       });
-      alert("Agregado Correctamente")
       setNuevaFechaHora("");
       cargarHorarios(doctorId);
     } catch (error) {
