@@ -416,7 +416,7 @@ useEffect(() => {
       <h1>Hola {nombre.split(" ")[0]} {apellido.split(" ")[0]} </h1>
       <hr/>
 
-      <h2>Citas del Doctor</h2>
+      <h2>Citas</h2>
       <table>
         <thead>
           <tr>
