@@ -1,87 +1,48 @@
-/* Contenedor principal */
-.container {
-  max-width: 900px;
+/* Estilos reutilizados del módulo de perfil */
+.ajuste-container form {
+  max-width: 600px;
   margin: auto;
-  padding: 20px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Tarjeta con sombra */
-.card {
-  background-color: #ffffff;
-  border-radius: 12px;
-  padding: 25px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-}
-
-/* Título del formulario */
-.card h4 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #2c3e50;
+.ajuste-form-group {
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Etiquetas */
-label.form-label {
-  font-weight: 500;
-  color: #333;
-}
-
-/* Selects e inputs */
-.form-control,
-.form-select {
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  padding: 8px 12px;
-  font-size: 0.95rem;
-}
-
-/* Botón principal */
-.btn-primary {
-  background-color: #3498db;
-  border: none;
-  border-radius: 8px;
-  padding: 10px 30px;
-  font-weight: 600;
-  transition: background-color 0.3s ease;
-}
-
-.btn-primary:hover {
-  background-color: #2980b9;
-}
-
-/* Tabla de horarios */
-.table {
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.table th,
-.table td {
-  vertical-align: middle;
-  padding: 12px;
-}
-
-.table th {
-  background-color: #f8f9fa;
-  color: #495057;
-}
-
-.table td {
-  background-color: #ffffff;
-  color: #333;
-}
-
-/* Horario seleccionado */
-.table td strong {
-  color: #27ae60;
+.ajuste-form-group label {
   font-weight: bold;
+  margin-bottom: 6px;
+  color: #333;
 }
 
-/* Responsive mejora */
-@media (max-width: 768px) {
-  .row .col-md-3 {
-    margin-bottom: 15px;
-  }
+.ajuste-form-group select,
+.ajuste-form-group input {
+  font-size: 0.9rem;
+  padding: 6px 10px;
+  border-radius: 6px;
+  width: 100%; /* O cámbialo a auto si no quieres que ocupen todo el ancho */
+  max-width: 400px;
+}
+
+.ajuste-btn-guardar {
+  background-color: #28a745;
+  color: white;
+  padding: 10px 25px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  width: auto !important;        
+  display: inline-block !important; 
+  text-align: center;
+}
+
+
+
+.ajuste-btn-guardar:hover {
+  background-color: #0056b3;
+}
+.text-center {
+  text-align: center;
 }

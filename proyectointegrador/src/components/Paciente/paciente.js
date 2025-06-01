@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './paciente.css';
+import './paciente.css'; // Asegúrate de que aquí tengas los mismos estilos que en perfil
 
 const Paciente = () => {
   const [specialties, setSpecialties] = useState([]);
@@ -45,89 +45,84 @@ const Paciente = () => {
   };
 
   return (
-  
-    <div className="container mt-5">
-      <div className="card p-4 shadow">
-        <h4 className="mb-4">Agendar Cita Médica</h4>
+    <div className="ajuste-container">
+      <h2>Agendar Cita Médica</h2>
+      <form onSubmit={onSubmit}>
+        <div className="ajuste-form-group">
+          <label>Especialidad:</label>
+          <select
+            required
+            name="specialtyId"
+            value={appointment.specialtyId}
+            onChange={handleChange}
+          >
+            <option value="">Selecciona</option>
+            {specialties.map(spec => (
+              <option key={spec.id} value={spec.id}>{spec.name}</option>
+            ))}
+          </select>
+        </div>
 
-        <form onSubmit={onSubmit}>
-          <div className="row g-3 align-items-end">
-            <div className="col-md-3">
-              <label className="form-label">Especialidad</label>
-              <select
-                className="form-select"
-                required
-                name="specialtyId"
-                value={appointment.specialtyId}
-                onChange={handleChange}
-              >
-                <option value="">Selecciona</option>
-                {specialties.map(spec => (
-                  <option key={spec.id} value={spec.id}>{spec.name}</option>
-                ))}
-              </select>
-            </div>
+        <div className="ajuste-form-group">
+          <label>Médico:</label>
+          <select
+            required
+            name="doctorId"
+            value={appointment.doctorId}
+            onChange={handleChange}
+          >
+            <option value="">Selecciona</option>
+            {filteredDoctors.map(doc => (
+              <option key={doc.id} value={doc.id}>{doc.name}</option>
+            ))}
+          </select>
+        </div>
 
-            <div className="col-md-3">
-              <label className="form-label">Médico</label>
-              <select
-                className="form-select"
-                required
-                name="doctorId"
-                value={appointment.doctorId}
-                onChange={handleChange}
-              >
-                <option value="">Selecciona</option>
-                {filteredDoctors.map(doc => (
-                  <option key={doc.id} value={doc.id}>{doc.name}</option>
-                ))}
-              </select>
-            </div>
+        <div className="ajuste-form-group">
+          <label>Fecha:</label>
+          <input
+            type="date"
+            required
+            name="date"
+            value={appointment.date}
+            onChange={(e) => {
+              handleChange(e);
+              onDateChange();
+            }}
+          />
+        </div>
 
-            <div className="col-md-3">
-              <label className="form-label">Fecha</label>
-              <input
-                type="date"
-                className="form-control"
-                required
-                name="date"
-                value={appointment.date}
-                onChange={(e) => {
-                  handleChange(e);
-                  onDateChange();
-                }}
-              />
-            </div>
+        <div className="ajuste-form-group">
+          <label>Hora:</label>
+          <select
+            required
+            name="time"
+            value={appointment.time}
+            onChange={handleChange}
+          >
+            <option value="">Selecciona</option>
+            {availableTimes.map((time, idx) => (
+              <option key={idx} value={time}>{time}</option>
+            ))}
+          </select>
+        </div>
 
-            <div className="col-md-3">
-              <label className="form-label">Hora</label>
-              <select
-                className="form-select"
-                required
-                name="time"
-                value={appointment.time}
-                onChange={handleChange}
-              >
-                <option value="">Selecciona</option>
-                {availableTimes.map((time, idx) => (
-                  <option key={idx} value={time}>{time}</option>
-                ))}
-              </select>
-            </div>
+        <div className="ajuste-form-group text-center">
+          <div style={{ display: 'inline-block' }}>
+            <button type="submit" className="ajuste-btn-guardar">
+              Agendar
+            </button>
           </div>
+        </div>
 
-          <div className="text-center mt-4">
-            <button type="submit" className="btn btn-primary px-5">Agendar</button>
-          </div>
-        </form>
-      </div>
 
-      {/* Tabla de horario */}
+      </form>
+
       {availableTimes.length > 0 && (
-        <div className="card mt-5 p-4 shadow">
-          <h5>Horario disponible</h5>
+        <div className="ajuste-form-group">
+          <h4>Horario disponible</h4>
           <table className="table table-bordered mt-3 text-center">
-            <thead className="table-light">
+            <thead>
               <tr>
                 {availableTimes.map((time, idx) => (
                   <th key={idx}>{time}</th>
