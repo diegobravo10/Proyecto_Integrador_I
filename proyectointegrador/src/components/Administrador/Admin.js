@@ -460,7 +460,12 @@ const Admin = () => {
                       cita.descripcion
                     )}
                   </td>
-                  <td className={cita.estado === "confirmado" ? "texto-confirmado" : cita.estado === "rechazado" ? "texto-rechazado" : ""}>
+                  <td className={
+                      cita.estado === "confirmado" ? "texto-confirmado" :
+                      cita.estado === "rechazado" ? "texto-rechazado" :
+                      cita.estado === "pendiente" ? "texto-pendiente" :
+                      ""
+                    }>
                       {cita.estado}
                     </td>
 

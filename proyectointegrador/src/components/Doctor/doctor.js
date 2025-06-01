@@ -470,7 +470,14 @@ useEffect(() => {
                       cita.descripcion
                     )}
                   </td>
-                  <td>{cita.estado}</td>
+                 <td className={
+                    cita.estado === "confirmado" ? "texto-confirmado" :
+                    cita.estado === "rechazado" ? "texto-rechazado" :
+                    cita.estado === "pendiente" ? "texto-pendiente" :
+                    ""
+                  }>
+                    {cita.estado}
+                  </td>
                   <td>
                     {editandoCitaId === cita.id ? (
                       <>

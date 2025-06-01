@@ -56,3 +56,19 @@ h1 {
     text-align: center;
 }
 
+.texto-confirmado {
+  color: #00ab2b; 
+  font-weight: bold;       /* Alinea con el texto normal */
+}
+
+/* Badge para rechazado */
+.texto-rechazado {
+  color: #ff0000;
+  font-weight: bold;
+}
+.texto-pendiente {
+  color: orange; /* O el color que prefieras */
+  font-weight: bold; /* O cualquier otro estilo */
+}
+
+

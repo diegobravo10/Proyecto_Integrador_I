@@ -130,6 +130,11 @@ label {
   font-weight: bold;
 }
 
+.texto-pendiente {
+  color: orange; /* O el color que prefieras */
+  font-weight: bold; /* O cualquier otro estilo */
+}
+
 
 
 
