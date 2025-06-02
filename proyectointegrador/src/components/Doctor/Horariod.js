@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, query, where, getDocs, updateDoc, doc, deleteDoc, addDoc, orderBy, limit } from "firebase/firestore";
+import { collection, query, where, getDocs, updateDoc, doc, deleteDoc, addDoc, orderBy, limit, onSnapshot  } from "firebase/firestore";
 import { db } from "../servicios/firebase";
 import './horariod.css'
 
@@ -16,25 +16,40 @@ const Horario = () => {
     cargarHorarios(storedId);
   }, []);
 
-  const cargarHorarios = async (id) => {
-    try {
-      const q = query(
-        collection(db, "horarios"),
-        where("doctorid", "==", id),
-        orderBy("fecha", "desc"),
-        limit(10)
-      );
-      const snapshot = await getDocs(q);
+  useEffect(() => {
+  const unsubscribe = cargarHorarios(doctorId);  // doctorId es tu ID del doctor
+  return () => unsubscribe && unsubscribe();     // Limpia el listener cuando el componente se desmonta
+}, [doctorId]);
+
+
+const cargarHorarios = (id) => {
+  try {
+    const q = query(
+      collection(db, "horarios"),
+      where("doctorid", "==", id),
+      orderBy("fecha", "desc"),
+      limit(10)
+    );
+
+    // Configura el listener en tiempo real
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const lista = snapshot.docs.map(docSnap => ({
         id: docSnap.id,
         ...docSnap.data(),
         fecha: docSnap.data().fecha.toDate()
       }));
       setHorarios(lista);
-    } catch (error) {
+    }, (error) => {
       console.error("Error al cargar horarios:", error);
-    }
-  };
+    });
+
+    // Devuelve la función para cancelar el listener (útil en React)
+    return unsubscribe;
+
+  } catch (error) {
+    console.error("Error al cargar horarios:", error);
+  }
+};
 
   const agregarHorario = async () => {
     if (!nuevaFechaHora || !doctorId) return;

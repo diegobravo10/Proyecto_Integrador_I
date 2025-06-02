@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { doc, getDoc, updateDoc, query, collection, where, getDocs, addDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, query, collection, where, getDocs, addDoc,onSnapshot  } from "firebase/firestore";
 import { db } from "../servicios/firebase";
 import { FaSearch } from "react-icons/fa";
 import { FaPlus } from "react-icons/fa";
@@ -95,20 +95,19 @@ const buscarPorCedula = async () => {
 
 
 useEffect(() => {
-  const obtenerEspecialidades = async () => {
-    try {
-      const querySnapshot = await getDocs(collection(db, "especialidad"));
-      const lista = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        nombre: doc.data().nombre
-      }));
-      setEspecialidades(lista);
-    } catch (error) {
-      console.error("Error al obtener especialidades:", error);
-    }
-  };
+  // Configurar listener en tiempo real
+  const unsubscribe = onSnapshot(collection(db, "especialidad"), (querySnapshot) => {
+    const lista = querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      nombre: doc.data().nombre
+    }));
+    setEspecialidades(lista);
+  }, (error) => {
+    console.error("Error al obtener especialidades:", error);
+  });
 
-  obtenerEspecialidades();
+  // Limpiar el listener cuando el componente se desmonte
+  return () => unsubscribe();
 }, []);
 
 const obtenerDoctoresPorEspecialidad = async (especialidadId) => {

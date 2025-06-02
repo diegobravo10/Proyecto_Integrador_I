@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, query, where, getDocs, updateDoc, doc, deleteDoc, addDoc } from "firebase/firestore";
+import { collection, query, where, getDocs, updateDoc, doc, deleteDoc, addDoc,onSnapshot  } from "firebase/firestore";
 import { db } from "../servicios/firebase";
 import './horario.css';
 
@@ -95,33 +95,43 @@ const procesarFecha = (fechaFirestore) => {
 
 
 
-
-  const cargarHorarios = async (doctorId) => {
+const cargarHorarios = (doctorId) => {
   try {
     setCargando(true);
     const q = query(collection(db, "horarios"), where("doctorid", "==", doctorId));
-    const snapshot = await getDocs(q);
 
-    if (snapshot.empty) {
-      setHorarios([]);
-      return;
-    }
+    // Configura el listener en tiempo real
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      if (snapshot.empty) {
+        setHorarios([]);
+        setCargando(false);
+        return;
+      }
 
-    const lista = snapshot.docs.map(docSnap => {
-      const data = docSnap.data();
-      return {
-        id: docSnap.id,
-        ...data,
-        fecha: procesarFecha(data.fecha),
-      };
+      const lista = snapshot.docs.map(docSnap => {
+        const data = docSnap.data();
+        return {
+          id: docSnap.id,
+          ...data,
+          fecha: procesarFecha(data.fecha),
+        };
+      });
+
+      lista.sort((a, b) => b.fecha?.getTime() - a.fecha?.getTime());
+      setHorarios(lista.slice(0, 30));
+      setCargando(false);
+    }, (error) => {
+      console.error("Error en el listener de horarios:", error);
+      setError("Error al cargar horarios: " + error.message);
+      setCargando(false);
     });
 
-    lista.sort((a, b) => b.fecha?.getTime() - a.fecha?.getTime());
-    setHorarios(lista.slice(0, 30));
+    // Devuelve la función para cancelar el listener si es necesario
+    return unsubscribe;
+
   } catch (error) {
-    console.error("Error al cargar horarios:", error);
-    setError("Error al cargar horarios: " + error.message);
-  } finally {
+    console.error("Error al configurar el listener de horarios:", error);
+    setError("Error al configurar el listener: " + error.message);
     setCargando(false);
   }
 };

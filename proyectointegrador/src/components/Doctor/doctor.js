@@ -209,11 +209,27 @@ const Doctor = () => {
   }, []);
 
   // Actualizar estado de cita
-  const actualizarEstadoCita = async (idCita, nuevoEstado) => {
+const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
+  try {
     const citaRef = doc(db, "citasmedicas", idCita);
+    const horarioRef = doc(db, "horarios", idHorario);
+
+    // Actualiza el estado de la cita
     await updateDoc(citaRef, { estado: nuevoEstado });
-    setCitas(citas.map(c => c.id === idCita ? { ...c, estado: nuevoEstado } : c));
-  };
+
+    // Actualiza la disponibilidad del horario según el estado
+    const disponibilidad = (nuevoEstado.toLowerCase() === "rechazado");  // true si es rechazada, false en otros casos
+    await updateDoc(horarioRef, { disponibilidad });
+
+    // Actualiza el estado local de las citas
+    setCitas(citas.map(c => 
+      c.id === idCita ? { ...c, estado: nuevoEstado } : c
+    ));
+
+  } catch (error) {
+    console.error("Error al actualizar cita o disponibilidad del horario:", error);
+  }
+};
 
   // Validar disponibilidad de horario (ahora con fecha y hora)
   const validarDisponibilidadHorario = async (doctorId, nuevaFechaHora, horarioIdAExcluir = null) => {
@@ -509,8 +525,8 @@ const Doctor = () => {
                           setErrorValidacion("");
                         }}>Modificar</button>
 
-                        <button onClick={() => actualizarEstadoCita(cita.id, "confirmado")}>Confirmar</button>
-                        <button onClick={() => actualizarEstadoCita(cita.id, "rechazado")}>Rechazar</button>
+                        <button onClick={() => actualizarEstadoCita(cita.id, "confirmado", cita.horarioid)}>Confirmar</button>
+                        <button onClick={() => actualizarEstadoCita(cita.id, "rechazado", cita.horarioid)}>Rechazar</button>
                       </>
                     )}
                   </td>
