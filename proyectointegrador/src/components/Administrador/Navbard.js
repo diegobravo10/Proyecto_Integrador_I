@@ -17,7 +17,7 @@ const NavbarA = () => {
   const handleLogout = () => {
     signOut(auth)
       .then(() => {
-        navigate("/"); // Asegúrate de que esta ruta exista
+        navigate("/"); 
       })
       .catch((error) => {
         console.error("Error al cerrar sesión:", error);

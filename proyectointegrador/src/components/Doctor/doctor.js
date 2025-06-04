@@ -19,7 +19,7 @@ const Doctor = () => {
 
   const [editandoCitaId, setEditandoCitaId] = useState(null);
   const [descripcionEdit, setDescripcionEdit] = useState("");
-  const [fechaHoraEdit, setFechaHoraEdit] = useState(""); // Cambiado a fechaHoraEdit para datetime-local
+  const [fechaHoraEdit, setFechaHoraEdit] = useState(""); 
 
   // Estados para validaciones
   const [cargandoValidacion, setCargandoValidacion] = useState(false);
@@ -32,7 +32,7 @@ const Doctor = () => {
   const [pacientes, setPacientes] = useState([]);
   const [pacienteSeleccionado, setPacienteSeleccionado] = useState("");
   const [descripcionNuevaCita, setDescripcionNuevaCita] = useState("");
-  const [fechaNuevaCita, setFechaNuevaCita] = useState(""); // Para el input datetime-local
+  const [fechaNuevaCita, setFechaNuevaCita] = useState(""); 
   const [mensajeNuevo, setMensajeNuevo] = useState("");
   const [busquedaCedula, setBusquedaCedula] = useState("");
 
@@ -67,7 +67,7 @@ const Doctor = () => {
 
     if (typeof timestamp === 'string') {
       const date = new Date(timestamp);
-      if (isNaN(date.getTime())) return ""; // Check for invalid date string
+      if (isNaN(date.getTime())) return ""; 
       return date.toLocaleString('es-ES', {
         day: '2-digit',
         month: '2-digit',
@@ -126,7 +126,7 @@ const Doctor = () => {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
   };
 
-  // Cargar pacientes (rol: pacient)
+  // Cargar pacientes 
   useEffect(() => {
     const cargarPacientes = async () => {
       const q = query(collection(db, "users"), where("rol", "==", "pacient"));
@@ -136,7 +136,7 @@ const Doctor = () => {
     cargarPacientes();
   }, []);
 
-  // 1. Cargar especialidades
+  // Cargar especialidades
   useEffect(() => {
     const cargarEspecialidades = async () => {
       const snapshot = await getDocs(collection(db, "especialidad"));
@@ -145,7 +145,7 @@ const Doctor = () => {
     cargarEspecialidades();
   }, []);
 
-  // 2. Cuando cambia especialidad, cargar doctores
+  // Cuando cambia especialidad, cargar doctores
   useEffect(() => {
     if (!especialidadSeleccionada) {
       setDoctores([]);
@@ -164,7 +164,7 @@ const Doctor = () => {
     cargarDoctores();
   }, [especialidadSeleccionada]);
 
-  // 3. Cuando cambia doctor, cargar citas + datos pacientes y horarios
+  // Cuando cambia doctor, cargar citas + datos pacientes y horarios
   useEffect(() => {
     const storedId = localStorage.getItem("uid");
     if (!storedId) return;
@@ -172,7 +172,6 @@ const Doctor = () => {
     // Consulta para las citas del doctor logueado
     const q = query(collection(db, "citasmedicas"), where("doctorid", "==", storedId));
 
-    // Suscripción en tiempo real
     const unsubscribe = onSnapshot(q, async (snapshot) => {
       const citasData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setCitas(citasData);
@@ -204,7 +203,6 @@ const Doctor = () => {
       setHorariosMap(horarios);
     });
 
-    // Limpia el listener al desmontar el componente
     return () => unsubscribe();
   }, []);
 
@@ -221,7 +219,6 @@ const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
     const disponibilidad = (nuevoEstado.toLowerCase() === "rechazado");  // true si es rechazada, false en otros casos
     await updateDoc(horarioRef, { disponibilidad });
 
-    // Actualiza el estado local de las citas
     setCitas(citas.map(c => 
       c.id === idCita ? { ...c, estado: nuevoEstado } : c
     ));
@@ -237,13 +234,13 @@ const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
       setCargandoValidacion(true);
       setErrorValidacion("");
 
-      // Convertir la nuevaFechaHora a un objeto Date para comparación
+    
       const fechaHoraObjetivo = new Date(nuevaFechaHora);
       if (isNaN(fechaHoraObjetivo.getTime())) {
         return { disponible: false, mensaje: "Formato de fecha y hora inválido." };
       }
 
-      // Validar que la fecha no sea en el pasado
+      
       if (fechaHoraObjetivo < new Date()) {
         return { disponible: false, mensaje: "La fecha y hora de la cita no pueden ser en el pasado." };
       }
@@ -251,14 +248,13 @@ const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
       const horariosQuery = query(
         collection(db, "horarios"),
         where("doctorid", "==", doctorId),
-        where("fecha", "==", fechaHoraObjetivo) // Busca horarios con la misma fecha y hora
+        where("fecha", "==", fechaHoraObjetivo) 
       );
 
       const horariosSnapshot = await getDocs(horariosQuery);
 
       // Si encuentra horarios en esa fecha y hora
       if (!horariosSnapshot.empty) {
-        // Verificar si alguno está ocupado (excluyendo el horario actual si estamos editando)
         const horariosOcupados = horariosSnapshot.docs.filter(docSnap => {
           const horario = docSnap.data();
           return docSnap.id !== horarioIdAExcluir && horario.estado === "ocupado";
@@ -395,7 +391,7 @@ const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
       // Crear un nuevo horario
       const nuevoHorario = {
         doctorid: doctorSeleccionado,
-        fecha: nuevaFechaHora, // Guardar como Timestamp de Firebase
+        fecha: nuevaFechaHora, 
         estado: "ocupado"
       };
       const horarioRef = await addDoc(collection(db, "horarios"), nuevoHorario);
@@ -411,16 +407,10 @@ const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
       await addDoc(collection(db, "citasmedicas"), nuevaCita);
       setMensajeNuevo("Cita registrada correctamente.");
 
-      // Limpia los campos y recarga las citas para el doctor seleccionado
       setDescripcionNuevaCita("");
       setFechaNuevaCita("");
       setBusquedaCedula("");
       setPacienteSeleccionado("");
-      // Recargar citas para que la nueva aparezca en la tabla
-      // Un efecto secundario del cambio de doctorSeleccionado o un re-fetch explícito.
-      // Para simplificar, podemos resetear doctorSeleccionado para que el useEffect lo recargue.
-      // O llamar directamente a la función que carga las citas para el doctor.
-      // Para esta solución, asumiremos que volver a seleccionar el doctor activará la recarga.
       setDoctorSeleccionado(doctorSeleccionado); 
     } catch (error) {
       console.error("Error al registrar cita:", error);
@@ -447,8 +437,45 @@ const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
           </tr>
         </thead>
         <tbody>
-          {citas.length > 0 ? (
-            citas.map(cita => {
+        {citas.length > 0 ? (
+          citas
+            .sort((a, b) => {
+              const horarioA = horariosMap[a.horarioid];
+              const horarioB = horariosMap[b.horarioid];
+              
+ 
+              if (!horarioA && !horarioB) return 0;
+              if (!horarioA) return 1;
+              if (!horarioB) return -1;
+              
+  
+              let fechaA, fechaB;
+              
+  
+              if (typeof horarioA.fecha === 'string') {
+                fechaA = new Date(horarioA.fecha);
+              } else if (horarioA.fecha && horarioA.fecha.seconds) {
+                fechaA = new Date(horarioA.fecha.seconds * 1000);
+              } else if (horarioA.fecha instanceof Date) {
+                fechaA = horarioA.fecha;
+              } else {
+                fechaA = new Date(0); 
+              }
+              
+              // Para horarioB
+              if (typeof horarioB.fecha === 'string') {
+                fechaB = new Date(horarioB.fecha);
+              } else if (horarioB.fecha && horarioB.fecha.seconds) {
+                fechaB = new Date(horarioB.fecha.seconds * 1000);
+              } else if (horarioB.fecha instanceof Date) {
+                fechaB = horarioB.fecha;
+              } else {
+                fechaB = new Date(0); 
+              }
+
+              return fechaB - fechaA; 
+            })
+            .map(cita => {
               const paciente = pacientesMap[cita.pacienteid];
               const horario = horariosMap[cita.horarioid];
 
@@ -489,7 +516,7 @@ const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
                       cita.descripcion
                     )}
                   </td>
-                 <td className={
+                  <td className={
                     cita.estado === "confirmado" ? "texto-confirmado" :
                     cita.estado === "rechazado" ? "texto-rechazado" :
                     cita.estado === "pendiente" ? "texto-pendiente" :
@@ -533,12 +560,12 @@ const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
                 </tr>
               )
             })
-          ) : (
-            <tr>
-              <td colSpan="5">No hay citas para el doctor seleccionado.</td>
-            </tr>
-          )}
-        </tbody>
+        ) : (
+          <tr>
+            <td colSpan="5">No hay citas para el doctor seleccionado.</td>
+          </tr>
+        )}
+      </tbody>
       </table>
 
       <hr/>

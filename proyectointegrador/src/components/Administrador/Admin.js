@@ -447,7 +447,7 @@ const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
           value={especialidadSeleccionada}
           onChange={e => {
             setEspecialidadSeleccionada(e.target.value);
-            setDoctorSeleccionado(""); // Reset doctor selection when specialty changes
+            setDoctorSeleccionado(""); 
           }}
         >
           <option value="">-- Todas las especialidades --</option>
@@ -488,96 +488,127 @@ const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
         </thead>
         <tbody>
           {citasFiltradas.length > 0 ? (
-            citasFiltradas.map(cita => {
-              const paciente = pacientesMap[cita.pacienteid];
-              const doctor = doctoresMap[cita.doctorid];
-              const especialidad = doctor ? especialidadesMap[doctor.especialidadid] : null;
-              const horario = horariosMap[cita.horarioid];
+            citasFiltradas
+              .sort((a, b) => {
+                const horarioA = horariosMap[a.horarioid];
+                const horarioB = horariosMap[b.horarioid];
+                
+                if (!horarioA && !horarioB) return 0;
+                if (!horarioA) return 1;
+                if (!horarioB) return -1;
+                
+                let fechaA, fechaB;
 
-              return (
-                <tr key={cita.id}>
-                  <td>{paciente ? `${paciente.nombre} ${paciente.apellido}` : cita.pacienteid}</td>
-                  <td>{doctor ? `${doctor.nombre} ${doctor.apellido}` : cita.doctorid}</td>
-                  <td>{especialidad ? especialidad.nombre : "Sin especialidad"}</td>
-                  <td>
-                    {editandoCitaId === cita.id ? (
-                      <div>
-                        <input
-                          type="datetime-local"
-                          value={fechaHoraEdit}
-                          onChange={e => {
-                            setFechaHoraEdit(e.target.value);
-                            setErrorValidacion("");
-                          }}
-                        />
-                        {errorValidacion && (
-                          <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
-                            {errorValidacion}
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      horario ? (
-                        formatearFecha(horario.fecha) || "Sin horario"
-                      ) : "Sin horario"
-                    )}
-                  </td>
-                  <td>
-                    {editandoCitaId === cita.id ? (
-                      <input
-                        type="text"
-                        value={descripcionEdit}
-                        onChange={e => setDescripcionEdit(e.target.value)}
-                      />
-                    ) : (
-                      cita.descripcion
-                    )}
-                  </td>
-                  <td className={
-                      cita.estado === "confirmado" ? "texto-confirmado" :
-                      cita.estado === "rechazado" ? "texto-rechazado" :
-                      cita.estado === "pendiente" ? "texto-pendiente" :
-                      ""
-                    }>
-                      {cita.estado}
+                if (typeof horarioA.fecha === 'string') {
+                  fechaA = new Date(horarioA.fecha);
+                } else if (horarioA.fecha && horarioA.fecha.seconds) {
+                  fechaA = new Date(horarioA.fecha.seconds * 1000);
+                } else if (horarioA.fecha instanceof Date) {
+                  fechaA = horarioA.fecha;
+                } else {
+                  fechaA = new Date(0); 
+                }
+                
+                if (typeof horarioB.fecha === 'string') {
+                  fechaB = new Date(horarioB.fecha);
+                } else if (horarioB.fecha && horarioB.fecha.seconds) {
+                  fechaB = new Date(horarioB.fecha.seconds * 1000);
+                } else if (horarioB.fecha instanceof Date) {
+                  fechaB = horarioB.fecha;
+                } else {
+                  fechaB = new Date(0); 
+                }
+                return fechaB - fechaA; 
+              })
+              .map(cita => {
+                const paciente = pacientesMap[cita.pacienteid];
+                const doctor = doctoresMap[cita.doctorid];
+                const especialidad = doctor ? especialidadesMap[doctor.especialidadid] : null;
+                const horario = horariosMap[cita.horarioid];
+
+                return (
+                  <tr key={cita.id}>
+                    <td>{paciente ? `${paciente.nombre} ${paciente.apellido}` : cita.pacienteid}</td>
+                    <td>{doctor ? `${doctor.nombre} ${doctor.apellido}` : cita.doctorid}</td>
+                    <td>{especialidad ? especialidad.nombre : "Sin especialidad"}</td>
+                    <td>
+                      {editandoCitaId === cita.id ? (
+                        <div>
+                          <input
+                            type="datetime-local"
+                            value={fechaHoraEdit}
+                            onChange={e => {
+                              setFechaHoraEdit(e.target.value);
+                              setErrorValidacion("");
+                            }}
+                          />
+                          {errorValidacion && (
+                            <div style={{ color: 'red', fontSize: '12px', marginTop: '4px' }}>
+                              {errorValidacion}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        horario ? (
+                          formatearFecha(horario.fecha) || "Sin horario"
+                        ) : "Sin horario"
+                      )}
                     </td>
-
-                  <td>
-                    {editandoCitaId === cita.id ? (
-                      <>
-                        <button
-                          onClick={() => guardarEdicion(cita.id)}
-                          disabled={cargandoValidacion}
-                        >
-                          {cargandoValidacion ? "Validando..." : "Guardar"}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditandoCitaId(null);
+                    <td>
+                      {editandoCitaId === cita.id ? (
+                        <input
+                          type="text"
+                          value={descripcionEdit}
+                          onChange={e => setDescripcionEdit(e.target.value)}
+                        />
+                      ) : (
+                        cita.descripcion
+                      )}
+                    </td>
+                    <td className={
+                        cita.estado === "confirmado" ? "texto-confirmado" :
+                        cita.estado === "rechazado" ? "texto-rechazado" :
+                        cita.estado === "pendiente" ? "texto-pendiente" :
+                        ""
+                      }>
+                        {cita.estado}
+                      </td>
+                    <td>
+                      {editandoCitaId === cita.id ? (
+                        <>
+                          <button
+                            onClick={() => guardarEdicion(cita.id)}
+                            disabled={cargandoValidacion}
+                          >
+                            {cargandoValidacion ? "Validando..." : "Guardar"}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setEditandoCitaId(null);
+                              setErrorValidacion("");
+                            }}
+                            disabled={cargandoValidacion}
+                          >
+                            Cancelar
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button onClick={() => {
+                            setEditandoCitaId(cita.id);
+                            setDescripcionEdit(cita.descripcion);
+                            setFechaHoraEdit(horario ? timestampToDateTimeInput(horario.fecha) : "");
                             setErrorValidacion("");
-                          }}
-                          disabled={cargandoValidacion}
-                        >
-                          Cancelar
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button onClick={() => {
-                          setEditandoCitaId(cita.id);
-                          setDescripcionEdit(cita.descripcion);
-                          setFechaHoraEdit(horario ? timestampToDateTimeInput(horario.fecha) : "");
-                          setErrorValidacion("");
-                        }}>Modificar</button>
+                          }}>Modificar</button>
 
-                        <button onClick={() => actualizarEstadoCita(cita.id, "confirmado", cita.horarioid)}>Confirmar</button>
-                        <button onClick={() => actualizarEstadoCita(cita.id, "rechazado", cita.horarioid)}>Rechazar</button>
-                      </>
-                    )}
-                  </td>
-                </tr>
-              )
-            })
+                          <button onClick={() => actualizarEstadoCita(cita.id, "confirmado", cita.horarioid)}>Confirmar</button>
+                          <button onClick={() => actualizarEstadoCita(cita.id, "rechazado", cita.horarioid)}>Rechazar</button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                )
+              })
           ) : (
             <tr>
               <td colSpan="7">No hay citas {especialidadSeleccionada || doctorSeleccionado ? 'que coincidan con los filtros seleccionados' : 'registradas'}.</td>

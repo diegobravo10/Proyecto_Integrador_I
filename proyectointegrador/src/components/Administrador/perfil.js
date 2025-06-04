@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
 import { doc, getDoc, updateDoc, collection, getDocs } from "firebase/firestore";
 import { db } from "../servicios/firebase";
-//import { FaSearch } from "react-icons/fa";
-//import { FaPlus } from "react-icons/fa";
-
 import { Timestamp } from "firebase/firestore";
 
 import './Ajuste.css';
@@ -88,9 +85,8 @@ const handleGuardar = async () => {
   try {
     const userRef = doc(db, "users", docId);
 
-    // Convertir fechaNacimiento (string) a Timestamp de Firebase
     const fechaComoTimestamp = fechaNacimiento
-    ? Timestamp.fromDate(new Date(fechaNacimiento + "T12:00:00"))  // Añade hora del mediodía
+    ? Timestamp.fromDate(new Date(fechaNacimiento + "T12:00:00"))  
     : null;
 
 

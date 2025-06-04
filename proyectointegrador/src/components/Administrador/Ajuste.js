@@ -38,7 +38,7 @@ const buscarPorCedula = async () => {
     }
 
     const resultados = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    setResultadoBusqueda(resultados[0]); // Asumimos que solo uno tendrá esa cédula
+    setResultadoBusqueda(resultados[0]); 
 
   } catch (error) {
     console.error("Error al buscar:", error);
@@ -95,7 +95,6 @@ const buscarPorCedula = async () => {
 
 
 useEffect(() => {
-  // Configurar listener en tiempo real
   const unsubscribe = onSnapshot(collection(db, "especialidad"), (querySnapshot) => {
     const lista = querySnapshot.docs.map(doc => ({
       id: doc.id,
@@ -106,7 +105,6 @@ useEffect(() => {
     console.error("Error al obtener especialidades:", error);
   });
 
-  // Limpiar el listener cuando el componente se desmonte
   return () => unsubscribe();
 }, []);
 
@@ -144,7 +142,6 @@ const obtenerDoctoresPorEspecialidad = async (especialidadId) => {
   try {
     const userRef = doc(db, "users", resultadoBusqueda.id);
 
-    // Prepara los datos a actualizar
     const datosActualizar = {
       rol: rolSeleccionado,
       especialidadid: rolSeleccionado === "doctor" ? especialidadSeleccionada : null,
@@ -175,7 +172,7 @@ const agregarEspecialidad = async () => {
       nombre: nuevaEspecialidad.trim()
     });
     alert("Especialidad agregada correctamente.");
-    setNuevaEspecialidad(""); // Limpiar el input
+    setNuevaEspecialidad("");
   } catch (error) {
     console.error("Error al agregar especialidad:", error);
     alert("Ocurrió un error al agregar la especialidad.");
@@ -184,7 +181,6 @@ const agregarEspecialidad = async () => {
 
 const guardarCambiosDoctor = async (doctor) => {
   try {
-    // Usa el estado local fechaNacimiento (string) para generar el timestamp
     const fechaComoTimestamp = fechaNacimiento
       ? Timestamp.fromDate(new Date(fechaNacimiento + "T12:00:00"))
       : null;
@@ -219,7 +215,6 @@ const guardarCambiosDoctor = async (doctor) => {
               const selected = e.target.value;
               setEspecialidadFiltrada(selected);
               setDoctorSeleccionado(null);
-              // Limpiar campos al cambiar especialidad
               setCorreo("");
               setNombre("");
               setApellido("");
@@ -346,7 +341,6 @@ const guardarCambiosDoctor = async (doctor) => {
                       <p><strong>Apellido:</strong> {resultadoBusqueda.apellido}</p>
                       <p><strong>Correo:</strong> {resultadoBusqueda.correo}</p>
                       <p><strong>Rol:</strong> {resultadoBusqueda.rol}</p>
-                      {/* Puedes agregar más campos si lo necesitas */}
                   </div>
 
                   <div className="action-section">
@@ -363,7 +357,6 @@ const guardarCambiosDoctor = async (doctor) => {
                           <option value="doctor">Doctor</option>
                       </select>
 
-                      {/* Mostrar el select de especialidades SOLO si el rol es "doctor" */}
                       {rolSeleccionado === 'doctor' && (
                           <>
                               <label htmlFor="especialidad" className="select-label">Especialidad:</label>

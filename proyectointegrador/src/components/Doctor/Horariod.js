@@ -17,8 +17,8 @@ const Horario = () => {
   }, []);
 
   useEffect(() => {
-  const unsubscribe = cargarHorarios(doctorId);  // doctorId es tu ID del doctor
-  return () => unsubscribe && unsubscribe();     // Limpia el listener cuando el componente se desmonta
+  const unsubscribe = cargarHorarios(doctorId);  
+  return () => unsubscribe && unsubscribe();     
 }, [doctorId]);
 
 
@@ -43,7 +43,6 @@ const cargarHorarios = (id) => {
       console.error("Error al cargar horarios:", error);
     });
 
-    // Devuelve la función para cancelar el listener (útil en React)
     return unsubscribe;
 
   } catch (error) {

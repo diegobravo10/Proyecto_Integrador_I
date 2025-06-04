@@ -13,11 +13,10 @@ const NavbarD = () => {
   const auth = getAuth();
   const navigate = useNavigate();
 
-  // Función para cerrar sesión
   const handleLogout = () => {
     signOut(auth)
       .then(() => {
-        navigate("/"); // Asegúrate de que esta ruta exista
+        navigate("/"); 
       })
       .catch((error) => {
         console.error("Error al cerrar sesión:", error);

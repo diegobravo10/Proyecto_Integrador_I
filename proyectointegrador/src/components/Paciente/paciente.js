@@ -2,22 +2,26 @@ import React, { useState, useEffect } from 'react';
 import './paciente.css';
 import { collection, getDocs, addDoc, query, where, onSnapshot} from "firebase/firestore";
 import { db } from "../servicios/firebase";
+import Swal from 'sweetalert2';
+
 
 const Paciente = () => {
   const [specialties, setSpecialties] = useState([]);
   const [doctors, setDoctors] = useState([]);
   const [filteredDoctors, setFilteredDoctors] = useState([]);
   const [availableSchedules, setAvailableSchedules] = useState([]);
-  const [appointments, setAppointments] = useState([]); // Para mostrar citas existentes
+  const [appointments, setAppointments] = useState([]);
   const [appointment, setAppointment] = useState({
     specialtyId: '',
     doctorId: '',
     horarioId: '',
     descripcion: ''
   });
+const [shownAppointments, setShownAppointments] = useState(new Set());
+
 
 // Obtener el ID del paciente actual
-const currentPatientId = localStorage.getItem('uid'); // Reemplaza con el ID real del paciente logueado
+const currentPatientId = localStorage.getItem('uid'); 
 
 useEffect(() => {
   const fetchData = async () => {
@@ -36,47 +40,6 @@ useEffect(() => {
         .map(doc => ({ id: doc.id, ...doc.data() }))
         .filter(user => user.rol === 'doctor');
       setDoctors(doctorsList);
-
-      // SUSCRIBIRSE a cambios en las citas médicas del paciente
-      const citasQuery = query(
-        collection(db, "citasmedicas"), 
-        where("pacienteid", "==", currentPatientId)
-      );
-
-      // Mapa para cachear horarios
-      const horariosMap = new Map();
-
-      // Suscribirse a horarios (para obtener siempre la última info)
-      const horariosUnsub = onSnapshot(collection(db, "horarios"), (snapshot) => {
-        snapshot.forEach((doc) => {
-          horariosMap.set(doc.id, { id: doc.id, ...doc.data() });
-        });
-        actualizarCitas(); // Intentar actualizar citas si ya tenemos algunas
-      });
-
-      // Suscribirse a cambios en las citas del paciente
-      let citasDocs = [];
-      const citasUnsub = onSnapshot(citasQuery, (snapshot) => {
-        citasDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        actualizarCitas();
-      });
-
-      // Función para actualizar citas combinadas con horarios
-      const actualizarCitas = () => {
-        const citasActualizadas = citasDocs.map(cita => ({
-          ...cita,
-          horarioInfo: horariosMap.get(cita.horarioid) || {}
-        }));
-        console.log("Citas actualizadas:", citasActualizadas);
-        setAppointments(citasActualizadas);
-      };
-
-      // Cleanup para cancelar la suscripción al desmontar
-      return () => {
-        horariosUnsub();
-        citasUnsub();
-      };
-
     } catch (error) {
       console.error("Error al obtener datos de Firebase:", error);
     }
@@ -85,6 +48,83 @@ useEffect(() => {
   fetchData();
 }, []);
 
+
+useEffect(() => {
+  if (doctors.length === 0) return;
+
+  const citasQuery = query(
+    collection(db, "citasmedicas"),
+    where("pacienteid", "==", currentPatientId)
+  );
+  const horariosMap = new Map();
+  let citasDocs = [];
+
+  const horariosUnsub = onSnapshot(collection(db, "horarios"), (snapshot) => {
+    snapshot.forEach((doc) => {
+      horariosMap.set(doc.id, { id: doc.id, ...doc.data() });
+    });
+    actualizarCitas();
+  });
+
+  const citasUnsub = onSnapshot(citasQuery, (snapshot) => {
+    citasDocs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    actualizarCitas();
+  });
+
+  function actualizarCitas() {
+    const nuevasCitas = citasDocs.map(cita => ({
+      ...cita,
+      horarioInfo: horariosMap.get(cita.horarioid) || {}
+    }));
+
+    nuevasCitas.forEach(cita => {
+      const doctorName = getDoctorName(cita.doctorid);
+      const fechaFormateada = cita.horarioInfo ? formatDate(cita.horarioInfo.fecha) : 'Fecha no disponible';
+      if (
+        (cita.estado === 'confirmado' || cita.estado === 'rechazado') &&
+        !shownAppointments.has(cita.id) &&
+        cita.horarioInfo &&
+        isDateFuture(cita.horarioInfo.fecha)
+      ) {
+        if (!doctorName || !cita.horarioInfo || !cita.horarioInfo.fecha) {
+          return;
+        }
+
+        if (cita.estado === 'confirmado') {
+          Swal.fire({
+            icon: 'success',
+            title: '¡Cita Confirmada!',
+            html: `
+              <p><strong>Doctor:</strong> ${doctorName}</p>
+              <p><strong>Fecha:</strong> ${fechaFormateada}</p>
+              <p>Gracias por confiar en nosotros. Si necesitas cambiar tu cita, contáctanos.</p>
+            `,
+            confirmButtonText: 'OK',
+          });
+        } else if (cita.estado === 'rechazado') {
+          Swal.fire({
+            icon: 'error',
+            title: 'Cita Rechazada',
+            html: `
+              <p>Lo sentimos, tu cita medica con ${doctorName} para el día ${fechaFormateada} ha sido rechazada.</p>
+              <p>Por favor, contacta con nosotros para reprogramar o para más información.</p>
+            `,
+            confirmButtonText: 'OK',
+          });
+        }
+
+        setShownAppointments(prev => new Set(prev).add(cita.id));
+      }
+    });
+
+    setAppointments(nuevasCitas);
+  }
+
+  return () => {
+    horariosUnsub();
+    citasUnsub();
+  };
+}, [doctors]); 
 
   useEffect(() => {
     const filtered = doctors.filter(doc => doc.especialidadid === appointment.specialtyId);
@@ -141,7 +181,6 @@ useEffect(() => {
     const { name, value } = e.target;
     setAppointment(prev => ({ ...prev, [name]: value }));
 
-    // Si cambia el doctor, actualizar horarios disponibles
     if (name === 'doctorId') {
       fetchAvailableSchedules(value);
     }
@@ -151,20 +190,18 @@ useEffect(() => {
     e.preventDefault();
     
     try {
-      // Crear la cita médica en Firebase
       const citaData = {
         pacienteid: currentPatientId,
         doctorid: appointment.doctorId,
         horarioid: appointment.horarioId,
         descripcion: appointment.descripcion,
-        estado: 'pendiente' // Estado inicial
+        estado: 'pendiente' 
       };
 
       await addDoc(collection(db, "citasmedicas"), citaData);
       
       alert('Cita médica agendada con éxito. Estado: Pendiente de confirmación.');
       
-      // Limpiar formulario y actualizar lista de citas
       setAppointment({
         specialtyId: '',
         doctorId: '',
@@ -179,34 +216,30 @@ useEffect(() => {
     }
   };
 
+
+  
   // Función para obtener el nombre del doctor
   const getDoctorName = (doctorId) => {
     const doctor = doctors.find(doc => doc.id === doctorId);
     return doctor ? `${doctor.nombre} ${doctor.apellido}` : 'Doctor no encontrado';
   };
 
-  // Función para obtener el nombre de la especialidad
-  const getSpecialtyName = (specialtyId) => {
-    const specialty = specialties.find(spec => spec.id === specialtyId);
-    return specialty ? specialty.nombre : 'Especialidad no encontrada';
-  };
 
-  // Función para verificar si una fecha es futura
+
   const isDateFuture = (timestamp) => {
     try {
       let date;
       
-      // Si es un timestamp de Firebase (objeto con seconds y nanoseconds)
+
       if (timestamp && timestamp.seconds) {
         date = new Date(timestamp.seconds * 1000);
       }
-      // Si es un timestamp como número
+
       else if (typeof timestamp === 'number') {
         date = new Date(timestamp);
       }
-      // Si es un array [año, mes, día, hora, minuto] o [año, mes, día]
+
       else if (Array.isArray(timestamp) && timestamp.length >= 3) {
-        // Los meses en JavaScript van de 0-11, por eso restamos 1
         const year = timestamp[0];
         const month = timestamp[1] - 1;
         const day = timestamp[2];
@@ -214,16 +247,15 @@ useEffect(() => {
         const minute = timestamp[4] || 0;
         date = new Date(year, month, day, hour, minute);
       }
-      // Si ya es un objeto Date válido
+
       else if (timestamp instanceof Date) {
         date = timestamp;
       }
-      // Intentar como string
+
       else {
         date = new Date(timestamp);
       }
       
-      // Verificar si la fecha es válida y es futura
       if (isNaN(date.getTime())) {
         return false;
       }
@@ -236,7 +268,7 @@ useEffect(() => {
     }
   };
 
-  // Función para obtener el color y texto del estado
+
   const getStatusStyle = (estado) => {
     const statusMap = {
       'confirmado': {
@@ -256,7 +288,7 @@ useEffect(() => {
       }
     };
     
-    // Normalizar el estado (quitar espacios y convertir a minúsculas)
+
     const normalizedEstado = estado ? estado.toString().trim().toLowerCase() : '';
     
     return statusMap[normalizedEstado] || {
@@ -271,17 +303,15 @@ useEffect(() => {
     try {
       let date;
       
-      // Si es un timestamp de Firebase (objeto con seconds y nanoseconds)
+
       if (timestamp && timestamp.seconds) {
         date = new Date(timestamp.seconds * 1000);
       }
-      // Si es un timestamp como número
+ 
       else if (typeof timestamp === 'number') {
         date = new Date(timestamp);
       }
-      // Si es un array [año, mes, día, hora, minuto] o [año, mes, día]
       else if (Array.isArray(timestamp) && timestamp.length >= 3) {
-        // Los meses en JavaScript van de 0-11, por eso restamos 1
         const year = timestamp[0];
         const month = timestamp[1] - 1;
         const day = timestamp[2];
@@ -289,21 +319,18 @@ useEffect(() => {
         const minute = timestamp[4] || 0;
         date = new Date(year, month, day, hour, minute);
       }
-      // Si ya es un objeto Date válido
       else if (timestamp instanceof Date) {
         date = timestamp;
       }
-      // Intentar como string
+
       else {
         date = new Date(timestamp);
       }
       
-      // Verificar si la fecha es válida
       if (isNaN(date.getTime())) {
         return 'Fecha inválida';
       }
       
-      // Formatear fecha con hora si está disponible
       const dateOptions = {
         year: 'numeric',
         month: 'long',
@@ -317,8 +344,7 @@ useEffect(() => {
       };
       
       const formattedDate = date.toLocaleDateString('es-ES', dateOptions);
-      
-      // Si tiene información de hora (no es medianoche), incluirla
+
       if (date.getHours() !== 0 || date.getMinutes() !== 0) {
         const formattedTime = date.toLocaleTimeString('es-ES', timeOptions);
         return `${formattedDate} - ${formattedTime}`;
@@ -330,6 +356,9 @@ useEffect(() => {
       return 'Error en fecha';
     }
   };
+
+
+
 
   return (
     <div className="ajuste-container">
@@ -472,31 +501,97 @@ useEffect(() => {
               </tr>
             </thead>
             <tbody>
-              {appointments.map((cita) => {
-                const statusStyle = getStatusStyle(cita.estado);
-                return (
-                  <tr key={cita.id}>
-                    <td>{getDoctorName(cita.doctorid)}</td>
-                    <td>{cita.horarioInfo ? formatDate(cita.horarioInfo.fecha) : 'No disponible'}</td>
-                    <td>{cita.descripcion || 'Sin descripción'}</td>
-                    <td>
-                      <span 
-                        style={{
-                          backgroundColor: statusStyle.backgroundColor,
-                          color: statusStyle.color,
-                          padding: '5px 10px',
-                          borderRadius: '5px',
-                          fontSize: '12px',
-                          fontWeight: 'bold'
-                        }}
-                      >
-                        {statusStyle.text}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
+            {appointments.length > 0 ? (
+              appointments
+                .sort((a, b) => {
+                  const horarioA = a.horarioInfo;
+                  const horarioB = b.horarioInfo;
+                  
+    
+                  if (!horarioA && !horarioB) return 0;
+                  if (!horarioA) return 1;
+                  if (!horarioB) return -1;
+                  
+   
+                  let fechaA, fechaB;
+                  
+                  if (horarioA.fecha) {
+                    if (horarioA.fecha.seconds) {
+                      fechaA = new Date(horarioA.fecha.seconds * 1000);
+                    } else if (typeof horarioA.fecha === 'number') {
+                      fechaA = new Date(horarioA.fecha);
+                    } else if (Array.isArray(horarioA.fecha) && horarioA.fecha.length >= 3) {
+                      const year = horarioA.fecha[0];
+                      const month = horarioA.fecha[1] - 1;
+                      const day = horarioA.fecha[2];
+                      const hour = horarioA.fecha[3] || 0;
+                      const minute = horarioA.fecha[4] || 0;
+                      fechaA = new Date(year, month, day, hour, minute);
+                    } else if (horarioA.fecha instanceof Date) {
+                      fechaA = horarioA.fecha;
+                    } else {
+                      fechaA = new Date(horarioA.fecha);
+                    }
+                  } else {
+                    fechaA = new Date(0); 
+                  }
+                  
+                  if (horarioB.fecha) {
+                    if (horarioB.fecha.seconds) {
+                      fechaB = new Date(horarioB.fecha.seconds * 1000);
+                    } else if (typeof horarioB.fecha === 'number') {
+                      fechaB = new Date(horarioB.fecha);
+                    } else if (Array.isArray(horarioB.fecha) && horarioB.fecha.length >= 3) {
+                      const year = horarioB.fecha[0];
+                      const month = horarioB.fecha[1] - 1;
+                      const day = horarioB.fecha[2];
+                      const hour = horarioB.fecha[3] || 0;
+                      const minute = horarioB.fecha[4] || 0;
+                      fechaB = new Date(year, month, day, hour, minute);
+                    } else if (horarioB.fecha instanceof Date) {
+                      fechaB = horarioB.fecha;
+                    } else {
+                      fechaB = new Date(horarioB.fecha);
+                    }
+                  } else {
+                    fechaB = new Date(0); 
+                  }
+   
+                  if (isNaN(fechaA.getTime())) fechaA = new Date(0);
+                  if (isNaN(fechaB.getTime())) fechaB = new Date(0);
+
+                  return fechaB- fechaA;
+                })
+                .map((cita) => {
+                  const statusStyle = getStatusStyle(cita.estado);
+                  return (
+                    <tr key={cita.id}>
+                      <td>{getDoctorName(cita.doctorid)}</td>
+                      <td>{cita.horarioInfo ? formatDate(cita.horarioInfo.fecha) : 'No disponible'}</td>
+                      <td>{cita.descripcion || 'Sin descripción'}</td>
+                      <td>
+                        <span 
+                          style={{
+                            backgroundColor: statusStyle.backgroundColor,
+                            color: statusStyle.color,
+                            padding: '5px 10px',
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            fontWeight: 'bold'
+                          }}
+                        >
+                          {statusStyle.text}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })
+            ) : (
+              <tr>
+                <td colSpan="4">No tienes citas médicas agendadas.</td>
+              </tr>
+            )}
+          </tbody>
           </table>
         )}
       </div>
