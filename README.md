@@ -1,4 +1,4 @@
-# Proyecto_Integrado_I
+# PROYECTO INTEGRADOR - CITAS MEDICAS
  Este repositorio, contiene una aplicacion web desarrollado con React, y consiste en un aplicacion de multiusuario para citas medicas, diferencias en roles de Administrador(Doctor o secretaria) y pacientes.
  Este proyecto se desarrolló con los servicios de firabase como es:
 •	Authentication
