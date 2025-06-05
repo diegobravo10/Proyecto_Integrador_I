@@ -148,10 +148,10 @@ const Admin = () => {
     cargarDoctores();
   }, []);
 
-  // Cargar pacientes (rol: pacient)
+  
   useEffect(() => {
     const cargarPacientes = async () => {
-      const q = query(collection(db, "users"), where("rol", "==", "pacient"));
+      const q = query(collection(db, "users"), where("rol", "==", "paciente"));
       const snapshot = await getDocs(q);
       const pacientesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
@@ -405,15 +405,6 @@ const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
     }
   };
 
-  const buscarPacientePorCedula = async () => {
-    // Esta función ya no es necesaria, pero la mantenemos por si acaso
-    console.log("Función de búsqueda de paciente no utilizada en esta vista");
-  };
-
-  const registrarCita = async () => {
-    // Esta función ya no es necesaria, pero la mantenemos por si acaso
-    console.log("Función de registro de cita no utilizada en esta vista");
-  };
 
   // Filtrar doctores por especialidad seleccionada
   const doctoresFiltrados = especialidadSeleccionada 

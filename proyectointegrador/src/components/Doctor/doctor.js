@@ -7,7 +7,6 @@ import './doctor.css'
 const Doctor = () => {
   const [especialidades, setEspecialidades] = useState([]);
   const [especialidadSeleccionada, setEspecialidadSeleccionada] = useState("");
-
   const [doctores, setDoctores] = useState([]);
   const [doctorSeleccionado, setDoctorSeleccionado] = useState("");
 
@@ -28,13 +27,7 @@ const Doctor = () => {
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
   const [docId, setDocId] = useState("");
-
   const [pacientes, setPacientes] = useState([]);
-  const [pacienteSeleccionado, setPacienteSeleccionado] = useState("");
-  const [descripcionNuevaCita, setDescripcionNuevaCita] = useState("");
-  const [fechaNuevaCita, setFechaNuevaCita] = useState(""); 
-  const [mensajeNuevo, setMensajeNuevo] = useState("");
-  const [busquedaCedula, setBusquedaCedula] = useState("");
 
   // Cargar datos del usuario logeado
   useEffect(() => {
@@ -62,6 +55,7 @@ const Doctor = () => {
   }, []);
 
   // Función helper para convertir Timestamp a string (Fecha y Hora)
+  //Ejemplo: "04/06/2025, 15:30"
   const formatearFecha = (timestamp) => {
     if (!timestamp) return "";
 
@@ -100,7 +94,7 @@ const Doctor = () => {
     return "";
   };
 
-  // Función helper para convertir Timestamp a formato YYYY-MM-DDTHH:MM para input datetime-local
+  // Función helper para convertir Timestamp a formato YYYY-MM-DDTHH:MM para input 
   const timestampToDateTimeInput = (timestamp) => {
     if (!timestamp) return "";
 
@@ -344,81 +338,6 @@ const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
     }
   };
 
-  const buscarPacientePorCedula = async () => {
-    try {
-      const q = query(collection(db, "users"), where("cedula", "==", busquedaCedula));
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
-        const pacienteDoc = snapshot.docs[0];
-        setPacienteSeleccionado(pacienteDoc.id);
-        setMensajeNuevo(`Paciente encontrado: ${pacienteDoc.data().nombre} ${pacienteDoc.data().apellido}`);
-      } else {
-        setPacienteSeleccionado("");
-        setMensajeNuevo("No se encontró paciente con esa cédula.");
-      }
-    } catch (error) {
-      console.error("Error al buscar paciente:", error);
-      setMensajeNuevo("Error en la búsqueda.");
-    }
-  };
-
-  const registrarCita = async () => {
-    if (!especialidadSeleccionada || !doctorSeleccionado || !pacienteSeleccionado || !fechaNuevaCita || !descripcionNuevaCita) {
-      setMensajeNuevo("Completa todos los campos (especialidad, doctor, paciente, fecha y hora, descripción).");
-      return;
-    }
-
-    try {
-      setMensajeNuevo("");
-      setCargandoValidacion(true);
-
-      const nuevaFechaHora = new Date(fechaNuevaCita);
-
-      // Validar la disponibilidad del horario antes de crear la cita
-      const storedId = localStorage.getItem("uid");
-      // ...
-      const validacion = await validarDisponibilidadHorario(
-        storedId,
-        nuevaFechaHora
-      );
-
-      if (!validacion.disponible) {
-        setMensajeNuevo(validacion.mensaje);
-        setCargandoValidacion(false);
-        return;
-      }
-
-      // Crear un nuevo horario
-      const nuevoHorario = {
-        doctorid: doctorSeleccionado,
-        fecha: nuevaFechaHora, 
-        estado: "ocupado"
-      };
-      const horarioRef = await addDoc(collection(db, "horarios"), nuevoHorario);
-
-      // Crear cita
-      const nuevaCita = {
-        doctorid: doctorSeleccionado,
-        pacienteid: pacienteSeleccionado,
-        horarioid: horarioRef.id,
-        descripcion: descripcionNuevaCita,
-        estado: "pendiente"
-      };
-      await addDoc(collection(db, "citasmedicas"), nuevaCita);
-      setMensajeNuevo("Cita registrada correctamente.");
-
-      setDescripcionNuevaCita("");
-      setFechaNuevaCita("");
-      setBusquedaCedula("");
-      setPacienteSeleccionado("");
-      setDoctorSeleccionado(doctorSeleccionado); 
-    } catch (error) {
-      console.error("Error al registrar cita:", error);
-      setMensajeNuevo("Error al registrar cita. Inténtalo de nuevo.");
-    } finally {
-      setCargandoValidacion(false);
-    }
-  };
 
   return (
     <div>
@@ -462,7 +381,6 @@ const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
                 fechaA = new Date(0); 
               }
               
-              // Para horarioB
               if (typeof horarioB.fecha === 'string') {
                 fechaB = new Date(horarioB.fecha);
               } else if (horarioB.fecha && horarioB.fecha.seconds) {
@@ -490,7 +408,7 @@ const actualizarEstadoCita = async (idCita, nuevoEstado, idHorario) => {
                           value={fechaHoraEdit}
                           onChange={e => {
                             setFechaHoraEdit(e.target.value);
-                            setErrorValidacion(""); // Limpiar error al cambiar fecha
+                            setErrorValidacion(""); 
                           }}
                         />
                         {errorValidacion && (

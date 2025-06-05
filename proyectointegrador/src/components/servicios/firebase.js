@@ -1,9 +1,9 @@
-// Import the functions you need from the SDKs you need
+
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
-// Your web app's Firebase configuration
+
 const firebaseConfig = {
   apiKey: "AIzaSyAJ6T872XITIO3GeCfaL4lY9gfp_lZl21o",
   authDomain: "citas-medicas-prointegrador.firebaseapp.com",

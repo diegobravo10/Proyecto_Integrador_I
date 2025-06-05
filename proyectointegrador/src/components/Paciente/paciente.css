@@ -21,7 +21,7 @@
   font-size: 0.9rem;
   padding: 6px 10px;
   border-radius: 6px;
-  width: 100%; /* O cámbialo a auto si no quieres que ocupen todo el ancho */
+  width: 100%; 
   max-width: 400px;
 }
 

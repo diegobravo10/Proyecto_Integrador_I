@@ -217,7 +217,6 @@ useEffect(() => {
   };
 
 
-  
   // Función para obtener el nombre del doctor
   const getDoctorName = (doctorId) => {
     const doctor = doctors.find(doc => doc.id === doctorId);

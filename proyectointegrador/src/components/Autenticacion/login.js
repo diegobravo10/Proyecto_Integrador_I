@@ -20,15 +20,12 @@ const Login = () => {
       const querySnapshot = await getDocs(q);
 
       if (!querySnapshot.empty) {
-        // El usuario ya existe en Firestore
         const userData = querySnapshot.docs[0].data();
 
         if (userData.rol === "doctor") {
           navigate("/doctor");
-          //window.location.href = "/doctor"; // Cambia esta ruta si lo necesitas
         } else if (userData.rol === "paciente") {
           navigate("/paciente");
-          //window.location.href = "/paciente";
         } else if (userData.rol === "admin") {
           navigate("/admin");
 
@@ -36,16 +33,8 @@ const Login = () => {
           window.location.href = "/no-autorizado";
         }
       } else {
-        // Usuario no existe, redirigir a formulario de registro
-        // Guarda temporalmente su UID y correo en localStorage si quieres usarlo en la siguiente página
-        
         localStorage.setItem("email", email);
         navigate("/registro");
-
-        // También puedes crear un documento inicial vacío si lo deseas
-        // await setDoc(doc(db, "users", uid), { uid, email });
-
-        window.location.href = "/registro"; // Redirige al formulario para completar datos
       }
       localStorage.setItem("uid", uid);
 
